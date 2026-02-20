@@ -2,7 +2,9 @@
 
 import argparse
 import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import anthropic
@@ -15,9 +17,11 @@ from .data import (
     load_kanji_db,
     load_kanjidic,
     load_kradfile,
+    load_mnemonic_for_kanji,
     load_personal_radicals,
     load_phonetic_db,
     load_wk_kanji_db,
+    save_mnemonic,
     save_personal_radical,
 )
 from .lookup import format_profile, lookup_kanji
@@ -79,6 +83,36 @@ def cmd_lookup(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_s
         print()
 
 
+def _stream_mnemonic(client, model, user_msg):
+    """Stream a mnemonic from the LLM, printing chunks and returning the full text."""
+    chunks = []
+    with client.messages.stream(
+        model=model,
+        max_tokens=1024,
+        system=get_system_prompt(),
+        messages=[{"role": "user", "content": user_msg}],
+    ) as stream:
+        for text in stream.text_stream:
+            print(text, end="", flush=True)
+            chunks.append(text)
+    print()  # Final newline
+    return "".join(chunks)
+
+
+def _edit_mnemonic(current_text):
+    """Open the user's editor with the current mnemonic text. Returns edited text."""
+    editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "vi"
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as f:
+        f.write(current_text)
+        tmppath = f.name
+    try:
+        subprocess.call([editor, tmppath])
+        edited = Path(tmppath).read_text(encoding="utf-8").strip()
+        return edited if edited else None
+    finally:
+        Path(tmppath).unlink(missing_ok=True)
+
+
 def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals):
     """Generate a mnemonic for the given kanji."""
     client = get_anthropic_client()
@@ -93,17 +127,34 @@ def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji
         print()
 
         user_msg = build_prompt(profile, user_context=args.context)
+        mnemonic_text = _stream_mnemonic(client, args.model, user_msg)
 
-        # Stream the response
-        with client.messages.stream(
-            model=args.model,
-            max_tokens=1024,
-            system=get_system_prompt(),
-            messages=[{"role": "user", "content": user_msg}],
-        ) as stream:
-            for text in stream.text_stream:
-                print(text, end="", flush=True)
-        print()  # Final newline
+        # Auto-save immediately
+        save_mnemonic(char, mnemonic_text, args.model)
+
+        if args.no_interactive:
+            continue
+
+        # Interactive refinement loop
+        while True:
+            print()
+            choice = input("[a]ccept / [r]etry / [e]dit / [q]uit: ").strip().lower()
+
+            if choice == "a":
+                break
+            elif choice == "r":
+                print()
+                print("── Regenerating mnemonic... ──")
+                print()
+                mnemonic_text = _stream_mnemonic(client, args.model, user_msg)
+                save_mnemonic(char, mnemonic_text, args.model)
+            elif choice == "e":
+                edited = _edit_mnemonic(mnemonic_text)
+                if edited:
+                    mnemonic_text = edited
+                    save_mnemonic(char, mnemonic_text, args.model)
+            elif choice == "q":
+                break
 
 
 def cmd_prompt(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals):
@@ -135,6 +186,21 @@ def cmd_names(args):
         print(f"  {char} → {name}")
 
 
+def cmd_show(args):
+    """Display saved mnemonics for given kanji."""
+    for char in args.kanji:
+        entry = load_mnemonic_for_kanji(char)
+        if entry:
+            print(f"═══ {char} ═══")
+            print(entry["mnemonic"])
+            print()
+            print(f"Model: {entry['model']}")
+            print(f"Saved: {entry['timestamp']}")
+        else:
+            print(f"No saved mnemonic for {char}")
+        print()
+
+
 def cmd_clear_cache(_args, *_data):
     clear_cache()
 
@@ -155,6 +221,7 @@ def main():
     p_memorize = subparsers.add_parser("memorize", aliases=["m"], help="Generate a mnemonic")
     p_memorize.add_argument("kanji", nargs="+", help="One or more kanji characters")
     p_memorize.add_argument("-c", "--context", help="Extra context to include (e.g., 'I always mix this up with 待')")
+    p_memorize.add_argument("-n", "--no-interactive", action="store_true", default=False, help="Save mnemonic without interactive prompt")
 
     # --- lookup ---
     p_lookup = subparsers.add_parser("lookup", aliases=["l"], help="Show kanji profile without LLM call")
@@ -172,6 +239,10 @@ def main():
 
     # --- names ---
     subparsers.add_parser("names", help="List all personal radical names")
+
+    # --- show ---
+    p_show = subparsers.add_parser("show", aliases=["s"], help="Show saved mnemonic for a kanji")
+    p_show.add_argument("kanji", nargs="+", help="One or more kanji characters")
 
     # --- clear-cache ---
     subparsers.add_parser("clear-cache", help="Remove cached database files")
@@ -193,6 +264,10 @@ def main():
 
     if args.command == "names":
         cmd_names(args)
+        return
+
+    if args.command in ("show", "s"):
+        cmd_show(args)
         return
 
     wk_api_key = get_wk_api_key()

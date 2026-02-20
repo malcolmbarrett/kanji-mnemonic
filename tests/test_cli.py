@@ -322,6 +322,7 @@ class TestCmdMemorize:
         self,
         capsys,
         monkeypatch,
+        tmp_cache_dir,
         sample_kanji_db,
         sample_phonetic_db,
         sample_wk_kanji_db,
@@ -333,8 +334,9 @@ class TestCmdMemorize:
         monkeypatch.setattr(
             "kanji_mnemonic.cli.get_anthropic_client", lambda: mock_client
         )
+        monkeypatch.setattr("kanji_mnemonic.data.CONFIG_DIR", tmp_cache_dir)
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model")
+        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=True)
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -353,6 +355,7 @@ class TestCmdMemorize:
         self,
         capsys,
         monkeypatch,
+        tmp_cache_dir,
         sample_kanji_db,
         sample_phonetic_db,
         sample_wk_kanji_db,
@@ -364,8 +367,9 @@ class TestCmdMemorize:
         monkeypatch.setattr(
             "kanji_mnemonic.cli.get_anthropic_client", lambda: mock_client
         )
+        monkeypatch.setattr("kanji_mnemonic.data.CONFIG_DIR", tmp_cache_dir)
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model")
+        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=True)
         cmd_memorize(
             args,
             sample_kanji_db,

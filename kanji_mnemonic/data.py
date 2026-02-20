@@ -309,6 +309,44 @@ def save_personal_radical(char: str, name: str) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
 
+def load_mnemonics() -> dict:
+    """Load the user's saved mnemonics dictionary.
+
+    Returns {kanji: {"mnemonic": str, "model": str, "timestamp": str}},
+    or empty dict if the file doesn't exist.
+    """
+    path = CONFIG_DIR / "mnemonics.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_mnemonic_for_kanji(kanji: str) -> dict | None:
+    """Load a single saved mnemonic entry, or None if not found."""
+    return load_mnemonics().get(kanji)
+
+
+def save_mnemonic(kanji: str, mnemonic: str, model: str) -> None:
+    """Save or update a mnemonic for a kanji character.
+
+    Creates the config directory and file if they don't exist.
+    Stores with an ISO-format timestamp.
+    """
+    from datetime import datetime
+
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    path = CONFIG_DIR / "mnemonics.json"
+    data = {}
+    if path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+    data[kanji] = {
+        "mnemonic": mnemonic,
+        "model": model,
+        "timestamp": datetime.now().isoformat(),
+    }
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+
 def clear_cache():
     """Remove all cached files."""
     if CACHE_DIR.exists():
