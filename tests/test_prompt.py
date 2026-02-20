@@ -1,7 +1,5 @@
 """Tests for kanji_mnemonic.prompt — system prompt and user message assembly."""
 
-import pytest
-
 from kanji_mnemonic.lookup import KanjiProfile
 from kanji_mnemonic.prompt import build_prompt, get_system_prompt
 

@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 
+from .data import _katakana_to_hiragana
+
 
 @dataclass
 class KanjiProfile:
@@ -32,6 +34,7 @@ def lookup_kanji(
     wk_radicals: dict,
     wk_kanji_subjects: dict | None = None,
     kradfile: dict | None = None,
+    kanjidic: dict | None = None,
 ) -> KanjiProfile:
     profile = KanjiProfile(character=char)
 
@@ -63,6 +66,17 @@ def lookup_kanji(
                     profile.wk_components.append({"char": rc, "name": rad_info["name"]})
                 else:
                     profile.wk_components.append({"char": rc, "name": None})
+
+    # --- Kanjidic fallback for meaning/readings (non-WK kanji) ---
+    if kanjidic:
+        kd = kanjidic.get(char)
+        if kd:
+            if not profile.wk_meaning and kd.get("meanings"):
+                profile.wk_meaning = kd["meanings"][0]
+            if not profile.onyomi and kd.get("onyomi"):
+                profile.onyomi = kd["onyomi"]
+            if not profile.kunyomi and kd.get("kunyomi"):
+                profile.kunyomi = kd["kunyomi"]
 
     # Track which component chars we've already added to wk_components
     existing_chars = {c["char"] for c in profile.wk_components}
@@ -180,8 +194,8 @@ def _infer_phonetic_semantic(
         if profile.character in compounds:
             profile.keisei_type = "comp_phonetic"
         elif profile.onyomi:
-            family_readings = set(ph.get("readings", []))
-            kanji_readings = set(profile.onyomi)
+            family_readings = {_katakana_to_hiragana(r) for r in ph.get("readings", [])}
+            kanji_readings = {_katakana_to_hiragana(r) for r in profile.onyomi}
             if family_readings & kanji_readings:
                 profile.keisei_type = "comp_phonetic_inferred"
             else:

@@ -2,21 +2,19 @@
 
 import argparse
 import json
-import sys
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from kanji_mnemonic.cli import (
     cmd_lookup,
     cmd_memorize,
     cmd_prompt,
-    cmd_clear_cache,
     get_wk_api_key,
     load_all_data,
     main,
 )
-
+ 
 
 class TestGetWkApiKey:
     """Tests for get_wk_api_key()."""
@@ -42,10 +40,13 @@ class TestLoadAllData:
         mock_wk_radicals = {"rad": 5}
         mock_wk_subjects = {"sub": 6}
 
+        mock_kanjidic = {"kd": 7}
+
         monkeypatch.setattr("kanji_mnemonic.cli.load_kanji_db", lambda: mock_kanji_db)
         monkeypatch.setattr("kanji_mnemonic.cli.load_phonetic_db", lambda: mock_phonetic_db)
         monkeypatch.setattr("kanji_mnemonic.cli.load_wk_kanji_db", lambda: mock_wk_kanji_db)
         monkeypatch.setattr("kanji_mnemonic.cli.load_kradfile", lambda: mock_kradfile)
+        monkeypatch.setattr("kanji_mnemonic.cli.load_kanjidic", lambda: mock_kanjidic)
 
         fetch_rad = MagicMock(return_value=mock_wk_radicals)
         fetch_subj = MagicMock(return_value=mock_wk_subjects)
@@ -57,13 +58,14 @@ class TestLoadAllData:
         fetch_rad.assert_called_once_with("fake-key")
         fetch_subj.assert_called_once_with("fake-key")
 
-        kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile = result
+        kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic = result
         assert kanji_db == mock_kanji_db
         assert phonetic_db == mock_phonetic_db
         assert wk_kanji_db == mock_wk_kanji_db
         assert wk_radicals == mock_wk_radicals
         assert wk_kanji_subjects == mock_wk_subjects
         assert kradfile == mock_kradfile
+        assert kanjidic == mock_kanjidic
 
     def test_without_key_loads_cache(self, tmp_cache_dir, monkeypatch):
         """Without an API key, cached wk_radicals.json and wk_kanji_subjects.json are loaded."""
@@ -81,9 +83,10 @@ class TestLoadAllData:
         monkeypatch.setattr("kanji_mnemonic.cli.load_phonetic_db", lambda: {})
         monkeypatch.setattr("kanji_mnemonic.cli.load_wk_kanji_db", lambda: {})
         monkeypatch.setattr("kanji_mnemonic.cli.load_kradfile", lambda: {})
+        monkeypatch.setattr("kanji_mnemonic.cli.load_kanjidic", lambda: {})
 
         result = load_all_data(None)
-        _, _, _, wk_radicals, wk_kanji_subjects, _ = result
+        _, _, _, wk_radicals, wk_kanji_subjects, _, _ = result
 
         assert wk_radicals == cached_radicals
         assert wk_kanji_subjects == cached_subjects
@@ -94,9 +97,10 @@ class TestLoadAllData:
         monkeypatch.setattr("kanji_mnemonic.cli.load_phonetic_db", lambda: {})
         monkeypatch.setattr("kanji_mnemonic.cli.load_wk_kanji_db", lambda: {})
         monkeypatch.setattr("kanji_mnemonic.cli.load_kradfile", lambda: {})
+        monkeypatch.setattr("kanji_mnemonic.cli.load_kanjidic", lambda: {})
 
         result = load_all_data(None)
-        _, _, _, wk_radicals, wk_kanji_subjects, _ = result
+        _, _, _, wk_radicals, wk_kanji_subjects, _, _ = result
 
         assert wk_radicals == {}
         assert wk_kanji_subjects is None
@@ -114,7 +118,7 @@ class TestArgumentParsing:
 
         Returns a dict of mock cmd functions keyed by name.
         """
-        mock_data = ({}, {}, {}, {}, {}, {})
+        mock_data = ({}, {}, {}, {}, {}, {}, {})
         monkeypatch.setattr("kanji_mnemonic.cli.get_wk_api_key", lambda: None)
         monkeypatch.setattr("kanji_mnemonic.cli.load_all_data", lambda key: mock_data)
 
@@ -208,6 +212,7 @@ class TestCmdLookup:
             sample_wk_radicals,
             sample_wk_kanji_subjects,
             sample_kradfile,
+            None,
         )
         output = capsys.readouterr().out
         assert "═══ 語 ═══" in output
@@ -232,6 +237,7 @@ class TestCmdLookup:
             sample_wk_radicals,
             sample_wk_kanji_subjects,
             sample_kradfile,
+            None,
         )
         output = capsys.readouterr().out
         assert "═══ 語 ═══" in output
@@ -260,6 +266,7 @@ class TestCmdPrompt:
             sample_wk_radicals,
             sample_wk_kanji_subjects,
             sample_kradfile,
+            None,
         )
         output = capsys.readouterr().out
         assert "SYSTEM PROMPT" in output
@@ -284,6 +291,7 @@ class TestCmdPrompt:
             sample_wk_radicals,
             sample_wk_kanji_subjects,
             sample_kradfile,
+            None,
         )
         output = capsys.readouterr().out
         assert "test context" in output
@@ -327,6 +335,7 @@ class TestCmdMemorize:
             sample_wk_radicals,
             sample_wk_kanji_subjects,
             sample_kradfile,
+            None,
         )
         output = capsys.readouterr().out
         assert "Hello world" in output
@@ -356,6 +365,7 @@ class TestCmdMemorize:
             sample_wk_radicals,
             sample_wk_kanji_subjects,
             sample_kradfile,
+            None,
         )
         output = capsys.readouterr().out
         profile_pos = output.index("═══ 語 ═══")

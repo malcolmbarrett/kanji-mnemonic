@@ -43,7 +43,7 @@ def build_prompt(profile: KanjiProfile, user_context: str | None = None) -> str:
     """Build the user message for mnemonic generation."""
     parts = []
 
-    parts.append(f"Generate a mnemonic for this kanji:\n")
+    parts.append("Generate a mnemonic for this kanji:\n")
     parts.append(format_profile(profile))
 
     if user_context:

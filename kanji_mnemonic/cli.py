@@ -13,6 +13,7 @@ from .data import (
     fetch_wk_kanji_subjects,
     fetch_wk_radicals,
     load_kanji_db,
+    load_kanjidic,
     load_kradfile,
     load_phonetic_db,
     load_wk_kanji_db,
@@ -41,6 +42,7 @@ def load_all_data(wk_api_key: str | None):
     wk_kanji_db = load_wk_kanji_db()
 
     kradfile = load_kradfile()
+    kanjidic = load_kanjidic()
 
     wk_radicals = {}
     wk_kanji_subjects = None
@@ -62,23 +64,23 @@ def load_all_data(wk_api_key: str | None):
             print("  Set WK_API_KEY for full radical name resolution.", file=sys.stderr)
             print("  Get your key at: https://www.wanikani.com/settings/personal_access_tokens", file=sys.stderr)
 
-    return kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile
+    return kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic
 
 
-def cmd_lookup(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile):
+def cmd_lookup(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic):
     """Just show the kanji profile without generating a mnemonic."""
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile)
+        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic)
         print(format_profile(profile))
         print()
 
 
-def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile):
+def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic):
     """Generate a mnemonic for the given kanji."""
     client = get_anthropic_client()
 
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile)
+        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic)
 
         # Show the profile first
         print(format_profile(profile))
@@ -100,10 +102,10 @@ def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji
         print()  # Final newline
 
 
-def cmd_prompt(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile):
+def cmd_prompt(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic):
     """Show the assembled prompt without calling the LLM."""
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile)
+        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic)
         print("── SYSTEM PROMPT ──")
         print(get_system_prompt())
         print()

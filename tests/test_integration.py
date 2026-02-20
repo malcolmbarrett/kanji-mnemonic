@@ -1,7 +1,7 @@
 """Integration tests: lookup_kanji -> format_profile -> build_prompt pipeline."""
 
 from kanji_mnemonic.lookup import lookup_kanji, format_profile
-from kanji_mnemonic.prompt import build_prompt, get_system_prompt
+from kanji_mnemonic.prompt import build_prompt
 
 
 class TestPhoneticSemanticPipeline:
@@ -26,7 +26,7 @@ class TestPhoneticSemanticPipeline:
             sample_wk_kanji_subjects,
             sample_kradfile,
         )
-        formatted = format_profile(profile)
+        format_profile(profile)
         prompt = build_prompt(profile)
 
         # Profile header is present
@@ -89,7 +89,7 @@ class TestKradfileFallbackPipeline:
             sample_wk_kanji_subjects,
             sample_kradfile,
         )
-        formatted = format_profile(profile)
+        format_profile(profile)
         prompt = build_prompt(profile)
 
         # Pipeline completes without error and produces output
@@ -144,7 +144,7 @@ class TestUnknownKanjiPipeline:
             sample_wk_kanji_subjects,
             sample_kradfile,
         )
-        formatted = format_profile(profile)
+        format_profile(profile)
         prompt = build_prompt(profile)
 
         # Pipeline completes and the character is present

@@ -1,7 +1,9 @@
 """Download, cache, and load the Keisei and WaniKani databases."""
 
+import io
 import json
 import os
+import tarfile
 from pathlib import Path
 
 import requests
@@ -184,6 +186,101 @@ def load_kradfile() -> dict:
     cache_path.write_text(json.dumps(kradfile, ensure_ascii=False), encoding="utf-8")
     print(f"  Cached {len(kradfile)} KRADFILE-u entries.")
     return kradfile
+
+
+KANJIDIC_API_URL = "https://api.github.com/repos/scriptin/jmdict-simplified/releases/latest"
+
+
+def _katakana_to_hiragana(text: str) -> str:
+    """Convert katakana characters to hiragana. Non-katakana passes through."""
+    # Katakana block: U+30A1..U+30F6, offset from hiragana is 0x60
+    return "".join(
+        chr(ord(c) - 0x60) if "\u30A1" <= c <= "\u30F6" else c
+        for c in text
+    )
+
+
+def _parse_kanjidic(raw: dict) -> dict:
+    """Parse raw kanjidic2 JSON into {char: {meanings, onyomi, kunyomi}}.
+
+    - ja_on readings are converted from katakana to hiragana
+    - Only English meanings are kept
+    - Characters with no readingMeaning are skipped
+    - Multiple readingMeaning groups are merged
+    """
+    result = {}
+    for entry in raw.get("characters", []):
+        literal = entry["literal"]
+        rm = entry.get("readingMeaning")
+        if rm is None:
+            continue
+
+        meanings = []
+        onyomi = []
+        kunyomi = []
+        for group in rm.get("groups", []):
+            for r in group.get("readings", []):
+                if r["type"] == "ja_on":
+                    onyomi.append(_katakana_to_hiragana(r["value"]))
+                elif r["type"] == "ja_kun":
+                    kunyomi.append(r["value"])
+            for m in group.get("meanings", []):
+                if m.get("lang", "en") == "en":
+                    meanings.append(m["value"])
+
+        result[literal] = {
+            "meanings": meanings,
+            "onyomi": onyomi,
+            "kunyomi": kunyomi,
+        }
+    return result
+
+
+def load_kanjidic() -> dict:
+    """Load Kanjidic2 data from jmdict-simplified. Cached after first download.
+
+    Downloads a .tgz tarball from the latest GitHub release, extracts the JSON,
+    parses it into {char: {meanings, onyomi, kunyomi}}, and caches as kanjidic.json.
+    """
+    ensure_cache_dir()
+    cache_path = CACHE_DIR / "kanjidic.json"
+    if cache_path.exists():
+        return json.loads(cache_path.read_text(encoding="utf-8"))
+
+    print("Downloading Kanjidic2 from jmdict-simplified...")
+
+    # Find the kanjidic2-en tarball URL from the latest release
+    resp = requests.get(KANJIDIC_API_URL, timeout=30)
+    resp.raise_for_status()
+    release = resp.json()
+
+    tarball_url = None
+    for asset in release.get("assets", []):
+        if asset["name"].startswith("kanjidic2-en") and asset["name"].endswith(".json.tgz"):
+            tarball_url = asset["browser_download_url"]
+            break
+
+    if tarball_url is None:
+        raise RuntimeError("Could not find kanjidic2-en tarball in latest jmdict-simplified release")
+
+    # Download and extract the tarball
+    resp = requests.get(tarball_url, timeout=120)
+    resp.raise_for_status()
+
+    with tarfile.open(fileobj=io.BytesIO(resp.content), mode="r:gz") as tar:
+        # The tarball contains a single JSON file
+        members = tar.getmembers()
+        json_member = next(m for m in members if m.name.endswith(".json"))
+        f = tar.extractfile(json_member)
+        if f is None:
+            raise RuntimeError(f"Could not extract {json_member.name} from tarball")
+        raw = json.loads(f.read().decode("utf-8"))
+
+    result = _parse_kanjidic(raw)
+
+    cache_path.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    print(f"  Cached {len(result)} Kanjidic2 entries.")
+    return result
 
 
 def clear_cache():

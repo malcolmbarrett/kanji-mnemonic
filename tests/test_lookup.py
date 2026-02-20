@@ -1,7 +1,5 @@
 """Comprehensive tests for kanji_mnemonic.lookup module."""
 
-import pytest
-
 from kanji_mnemonic.lookup import (
     KanjiProfile,
     _find_name,
