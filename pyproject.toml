@@ -14,3 +14,10 @@ kanji = "kanji_mnemonic.cli:main"
 
 [tool.uv]
 package = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "responses>=0.26.0",
+]

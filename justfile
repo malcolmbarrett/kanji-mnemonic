@@ -25,3 +25,11 @@ lookup *KANJI:
 # Generate mnemonic
 memorize *ARGS:
     kanji memorize {{ARGS}}
+
+# Run tests
+test *ARGS:
+    uv run pytest {{ARGS}}
+
+# Run tests with coverage
+test-cov *ARGS:
+    uv run pytest --cov=kanji_mnemonic --cov-report=term-missing {{ARGS}}
