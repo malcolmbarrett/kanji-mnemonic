@@ -85,14 +85,18 @@ def lookup_kanji(
     # --- Keisei kanji DB ---
     keisei = kanji_db.get(char)
     if keisei:
-        profile.keisei_type = keisei.get("type")
-        profile.semantic_component = keisei.get("semantic")
-        profile.phonetic_component = keisei.get("phonetic")
-        profile.decomposition = keisei.get("decomposition", [])
+        keisei_type = keisei.get("type")
+        if keisei_type == "unprocessed":
+            keisei = None  # fall through to KRADFILE
+        else:
+            profile.keisei_type = keisei_type
+            profile.semantic_component = keisei.get("semantic")
+            profile.phonetic_component = keisei.get("phonetic")
+            profile.decomposition = keisei.get("decomposition", [])
 
-        # If readings weren't found in WK data, use Keisei readings
-        if not profile.onyomi and keisei.get("readings"):
-            profile.onyomi = keisei["readings"]
+            # If readings weren't found in WK data, use Keisei readings
+            if not profile.onyomi and keisei.get("readings"):
+                profile.onyomi = keisei["readings"]
 
     # --- KRADFILE-u fallback (non-WK kanji) ---
     if not keisei and kradfile:
@@ -178,6 +182,11 @@ def lookup_kanji(
         for comp in profile.wk_components:
             if comp["char"] in personal_radicals:
                 comp["name"] = personal_radicals[comp["char"]]
+        # Also update phonetic_family's wk_radical_name if applicable
+        if profile.phonetic_family:
+            ph_char = profile.phonetic_family.get("phonetic_char")
+            if ph_char and ph_char in personal_radicals:
+                profile.phonetic_family["wk_radical_name"] = personal_radicals[ph_char]
 
     return profile
 

@@ -179,7 +179,10 @@ class TestPersonalRadicalsInLookup:
         sample_wk_kanji_subjects,
         sample_kradfile,
     ):
-        """Without a personal radical entry, WK name is still used."""
+        """Without a personal radical entry, WK name is still used.
+
+        See also TestPersonalRadicalsInPhoneticFamily for phonetic family tests.
+        """
         from kanji_mnemonic.lookup import lookup_kanji
 
         profile = lookup_kanji(
@@ -194,6 +197,126 @@ class TestPersonalRadicalsInLookup:
         )
         say_comp = next(c for c in profile.wk_components if c["char"] == "言")
         assert say_comp["name"] == "Say"
+
+
+# ---------------------------------------------------------------------------
+# Tests: personal radicals in phonetic family display
+# ---------------------------------------------------------------------------
+
+
+class TestPersonalRadicalsInPhoneticFamily:
+    """Tests for personal radical names appearing in phonetic family section (bd-3h0).
+
+    The phonetic_family dict has its own wk_radical_name field that is
+    set independently from wk_components. Personal radical overrides
+    must also update this field.
+    """
+
+    def test_phonetic_family_uses_personal_radical_name(
+        self,
+        sample_kanji_db,
+        sample_phonetic_db,
+        sample_wk_kanji_db,
+        sample_wk_radicals,
+        sample_wk_kanji_subjects,
+        sample_kradfile,
+    ):
+        """Phonetic family wk_radical_name reflects personal radical override."""
+        from kanji_mnemonic.lookup import lookup_kanji
+
+        # 話 has phonetic component 舌, which has wk-radical: None in phonetic_db
+        personal_radicals = {"舌": "Tongue Radical"}
+        profile = lookup_kanji(
+            "話",
+            sample_kanji_db,
+            sample_phonetic_db,
+            sample_wk_kanji_db,
+            sample_wk_radicals,
+            sample_wk_kanji_subjects,
+            sample_kradfile,
+            personal_radicals=personal_radicals,
+        )
+        assert profile.phonetic_family is not None
+        assert profile.phonetic_family["wk_radical_name"] == "Tongue Radical"
+
+    def test_phonetic_family_format_uses_personal_radical_name(
+        self,
+        sample_kanji_db,
+        sample_phonetic_db,
+        sample_wk_kanji_db,
+        sample_wk_radicals,
+        sample_wk_kanji_subjects,
+        sample_kradfile,
+    ):
+        """format_profile() shows the personal radical name in Phonetic Family section."""
+        from kanji_mnemonic.lookup import format_profile, lookup_kanji
+
+        personal_radicals = {"舌": "Tongue Radical"}
+        profile = lookup_kanji(
+            "話",
+            sample_kanji_db,
+            sample_phonetic_db,
+            sample_wk_kanji_db,
+            sample_wk_radicals,
+            sample_wk_kanji_subjects,
+            sample_kradfile,
+            personal_radicals=personal_radicals,
+        )
+        output = format_profile(profile)
+        assert "Tongue Radical" in output
+        assert "(no WK name)" not in output
+
+    def test_phonetic_family_without_personal_radical_still_shows_no_wk_name(
+        self,
+        sample_kanji_db,
+        sample_phonetic_db,
+        sample_wk_kanji_db,
+        sample_wk_radicals,
+        sample_wk_kanji_subjects,
+        sample_kradfile,
+    ):
+        """Without a personal radical for the phonetic component, '(no WK name)' is still shown."""
+        from kanji_mnemonic.lookup import format_profile, lookup_kanji
+
+        profile = lookup_kanji(
+            "話",
+            sample_kanji_db,
+            sample_phonetic_db,
+            sample_wk_kanji_db,
+            sample_wk_radicals,
+            sample_wk_kanji_subjects,
+            sample_kradfile,
+            personal_radicals={},
+        )
+        output = format_profile(profile)
+        assert "(no WK name)" in output
+
+    def test_phonetic_family_personal_overrides_existing_wk_name(
+        self,
+        sample_kanji_db,
+        sample_phonetic_db,
+        sample_wk_kanji_db,
+        sample_wk_radicals,
+        sample_wk_kanji_subjects,
+        sample_kradfile,
+    ):
+        """Personal radical name overrides even an existing wk-radical name from phonetic_db."""
+        from kanji_mnemonic.lookup import lookup_kanji
+
+        # 語 has phonetic 吾, which has wk-radical: "five-mouths" in phonetic_db
+        personal_radicals = {"吾": "My Custom Name"}
+        profile = lookup_kanji(
+            "語",
+            sample_kanji_db,
+            sample_phonetic_db,
+            sample_wk_kanji_db,
+            sample_wk_radicals,
+            sample_wk_kanji_subjects,
+            sample_kradfile,
+            personal_radicals=personal_radicals,
+        )
+        assert profile.phonetic_family is not None
+        assert profile.phonetic_family["wk_radical_name"] == "My Custom Name"
 
 
 # ---------------------------------------------------------------------------

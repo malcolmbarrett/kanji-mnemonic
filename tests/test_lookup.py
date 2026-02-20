@@ -229,6 +229,159 @@ class TestLookupKanjiKeisei:
 
 
 # ---------------------------------------------------------------------------
+# TestUnprocessedKeiseiType
+# ---------------------------------------------------------------------------
+
+
+class TestUnprocessedKeiseiType:
+    """Tests for kanji with 'unprocessed' Keisei type (bd-2vf).
+
+    Kanji like 辻 have type='unprocessed' in the Keisei DB. This should
+    be treated as if no Keisei entry exists, falling through to KRADFILE-u
+    for decomposition and component resolution.
+    """
+
+    def test_unprocessed_falls_through_to_kradfile(
+        self,
+        sample_phonetic_db,
+        sample_wk_radicals,
+    ):
+        """Kanji with 'unprocessed' Keisei type gets decomposition from KRADFILE-u."""
+        kanji_db = {
+            "辻": {
+                "type": "unprocessed",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": [],
+            },
+        }
+        kradfile = {"辻": ["辶", "十"]}
+        profile = lookup_kanji(
+            "辻",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            sample_wk_radicals,
+            kradfile=kradfile,
+        )
+        assert profile.decomposition == ["辶", "十"]
+
+    def test_unprocessed_does_not_set_keisei_type(
+        self,
+        sample_phonetic_db,
+        sample_wk_radicals,
+    ):
+        """Kanji with 'unprocessed' Keisei type should not have keisei_type set."""
+        kanji_db = {
+            "辻": {
+                "type": "unprocessed",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": [],
+            },
+        }
+        kradfile = {"辻": ["辶", "十"]}
+        profile = lookup_kanji(
+            "辻",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            sample_wk_radicals,
+            kradfile=kradfile,
+        )
+        assert profile.keisei_type is None
+
+    def test_unprocessed_does_not_display_raw_type(
+        self,
+        sample_phonetic_db,
+        sample_wk_radicals,
+    ):
+        """format_profile() should not show 'Type: unprocessed' for unprocessed kanji."""
+        kanji_db = {
+            "辻": {
+                "type": "unprocessed",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": [],
+            },
+        }
+        kradfile = {"辻": ["辶", "十"]}
+        profile = lookup_kanji(
+            "辻",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            sample_wk_radicals,
+            kradfile=kradfile,
+        )
+        output = format_profile(profile)
+        assert "unprocessed" not in output.lower()
+
+    def test_unprocessed_resolves_kradfile_component_names(
+        self,
+        sample_phonetic_db,
+    ):
+        """Components from KRADFILE-u are resolved to WK radical names."""
+        kanji_db = {
+            "辻": {
+                "type": "unprocessed",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": [],
+            },
+        }
+        wk_radicals = {
+            "辶": {"name": "Scooter", "level": 3, "slug": "scooter"},
+            "十": {"name": "Cross", "level": 1, "slug": "cross"},
+        }
+        kradfile = {"辻": ["辶", "十"]}
+        profile = lookup_kanji(
+            "辻",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            wk_radicals,
+            kradfile=kradfile,
+        )
+        component_map = {c["char"]: c["name"] for c in profile.wk_components}
+        assert component_map["辶"] == "Scooter"
+        assert component_map["十"] == "Cross"
+
+    def test_unprocessed_shows_decomposition_in_output(
+        self,
+        sample_phonetic_db,
+        sample_wk_radicals,
+    ):
+        """format_profile() shows the KRADFILE decomposition for 'unprocessed' kanji."""
+        kanji_db = {
+            "辻": {
+                "type": "unprocessed",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": [],
+            },
+        }
+        kradfile = {"辻": ["辶", "十"]}
+        profile = lookup_kanji(
+            "辻",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            sample_wk_radicals,
+            kradfile=kradfile,
+        )
+        output = format_profile(profile)
+        assert "Decomposition:" in output
+        assert "辶" in output
+        assert "十" in output
+
+
+# ---------------------------------------------------------------------------
 # TestLookupKanjiPhoneticFamily
 # ---------------------------------------------------------------------------
 
