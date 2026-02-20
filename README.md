@@ -18,9 +18,7 @@ Given a kanji, the tool:
 # Clone or download this directory, then:
 cd kanji-mnemonic
 
-# Copy the example env file and fill in your keys
-cp .env.example .env
-# Then edit .env with your keys:
+# Create a .env file with your API keys:
 #   ANTHROPIC_API_KEY=sk-ant-...
 #   WK_API_KEY=your-wanikani-api-key
 
@@ -43,6 +41,8 @@ kanji memorize 詠
 # or shorthand:
 kanji m 詠
 ```
+
+After generating, you'll be prompted to **[a]ccept**, **[r]etry** (regenerate), **[e]dit** (open in `$EDITOR`), or **[q]uit**. Mnemonics are auto-saved to `~/.config/kanji/mnemonics.json`.
 
 ### Multiple kanji at once
 
@@ -72,8 +72,39 @@ kanji p 詠
 
 ### Use a different model
 
+The default model is `claude-sonnet-4-20250514`. Override with `--model`:
+
 ```bash
-kanji --model claude-haiku-4-5-20241022 m 詠
+kanji --model claude-haiku-4-5-20251001 m 詠
+```
+
+### Name a radical
+
+When a component doesn't have a WaniKani name, give it your own:
+
+```bash
+kanji name 隹 "old bird"
+```
+
+### List your personal radical names
+
+```bash
+kanji names
+```
+
+### Show a saved mnemonic
+
+```bash
+kanji show 詠
+kanji s 詠
+```
+
+### Skip the interactive prompt
+
+By default, `memorize` enters an interactive loop where you can accept, retry, edit, or quit. Use `-n` to skip it:
+
+```bash
+kanji m -n 詠
 ```
 
 ### Clear cached data
@@ -115,8 +146,11 @@ WaniKani Components:
 
 - **Keisei databases**: Phonetic-semantic composition data from [mwil/wanikani-userscripts](https://github.com/mwil/wanikani-userscripts)
 - **WaniKani API**: Radical names and kanji component mappings
+- **KRADFILE-u**: Visual radical decomposition for ~13k kanji (fallback for non-WK kanji)
+- **Kanjidic2**: Meanings, on'yomi, kun'yomi from [jmdict-simplified](https://github.com/scriptin/jmdict-simplified) (fallback for non-WK kanji)
 - **Claude**: Mnemonic generation
 
-## Cache location
+## File locations
 
-Data is cached at `~/.cache/kanji-mnemonic/`. Override with `KANJI_MNEMONIC_CACHE` env var.
+- **Cache**: `~/.cache/kanji-mnemonic/` — downloaded databases (override with `KANJI_MNEMONIC_CACHE` env var)
+- **Config**: `~/.config/kanji/` — personal radical names (`radicals.json`) and saved mnemonics (`mnemonics.json`). Override with `KANJI_MNEMONIC_CONFIG` env var.
