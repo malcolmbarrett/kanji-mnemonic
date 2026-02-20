@@ -72,10 +72,10 @@ kanji p 詠
 
 ### Use a different model
 
-The default model is `claude-sonnet-4-20250514`. Override with `--model`:
+The default model is `claude-sonnet-4-6`. Override with `--model`:
 
 ```bash
-kanji --model claude-haiku-4-5-20251001 m 詠
+kanji --model claude-haiku-4-5 m 詠
 ```
 
 ### Name a radical
