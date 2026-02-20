@@ -15,8 +15,10 @@ from .data import (
     load_kanji_db,
     load_kanjidic,
     load_kradfile,
+    load_personal_radicals,
     load_phonetic_db,
     load_wk_kanji_db,
+    save_personal_radical,
 )
 from .lookup import format_profile, lookup_kanji
 from .prompt import build_prompt, get_system_prompt
@@ -64,23 +66,25 @@ def load_all_data(wk_api_key: str | None):
             print("  Set WK_API_KEY for full radical name resolution.", file=sys.stderr)
             print("  Get your key at: https://www.wanikani.com/settings/personal_access_tokens", file=sys.stderr)
 
-    return kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic
+    personal_radicals = load_personal_radicals()
+
+    return kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals
 
 
-def cmd_lookup(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic):
+def cmd_lookup(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals):
     """Just show the kanji profile without generating a mnemonic."""
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic)
+        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals=personal_radicals)
         print(format_profile(profile))
         print()
 
 
-def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic):
+def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals):
     """Generate a mnemonic for the given kanji."""
     client = get_anthropic_client()
 
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic)
+        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals=personal_radicals)
 
         # Show the profile first
         print(format_profile(profile))
@@ -102,16 +106,33 @@ def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji
         print()  # Final newline
 
 
-def cmd_prompt(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic):
+def cmd_prompt(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals):
     """Show the assembled prompt without calling the LLM."""
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic)
+        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals=personal_radicals)
         print("── SYSTEM PROMPT ──")
         print(get_system_prompt())
         print()
         print("── USER MESSAGE ──")
         print(build_prompt(profile, user_context=args.context))
         print()
+
+
+def cmd_name(args):
+    """Save a personal radical name."""
+    save_personal_radical(args.radical, args.name)
+    print(f"Saved: {args.radical} → {args.name}")
+
+
+def cmd_names(args):
+    """List all personal radical names."""
+    data = load_personal_radicals()
+    if not data:
+        print("No personal radical names yet.")
+        print("Use 'kanji name <radical> <name>' to add one.")
+        return
+    for char, name in data.items():
+        print(f"  {char} → {name}")
 
 
 def cmd_clear_cache(_args, *_data):
@@ -144,6 +165,14 @@ def main():
     p_prompt.add_argument("kanji", nargs="+", help="One or more kanji characters")
     p_prompt.add_argument("-c", "--context", help="Extra context to include")
 
+    # --- name ---
+    p_name = subparsers.add_parser("name", help="Add or update a personal radical name")
+    p_name.add_argument("radical", help="The radical character")
+    p_name.add_argument("name", help="Your name for this radical")
+
+    # --- names ---
+    subparsers.add_parser("names", help="List all personal radical names")
+
     # --- clear-cache ---
     subparsers.add_parser("clear-cache", help="Remove cached database files")
 
@@ -156,6 +185,14 @@ def main():
 
     if args.command == "clear-cache":
         cmd_clear_cache(args)
+        return
+
+    if args.command == "name":
+        cmd_name(args)
+        return
+
+    if args.command == "names":
+        cmd_names(args)
         return
 
     wk_api_key = get_wk_api_key()

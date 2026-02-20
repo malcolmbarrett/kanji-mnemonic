@@ -570,7 +570,7 @@ class TestFormatProfile:
             wk_components=[{"char": "世", "name": None}],
         )
         output = format_profile(profile)
-        assert "(no WK name)" in output
+        assert "kanji name 世" in output
         assert "世" in output
 
 
@@ -586,11 +586,11 @@ class TestFindName:
         assert _find_name("言", components) == "Say"
 
     def test_not_found(self):
-        """Returns '(no WK name)' when char is not in components."""
+        """Returns hint message when char is not in components."""
         components = [{"char": "言", "name": "Say"}]
-        assert _find_name("X", components) == "(no WK name)"
+        assert _find_name("X", components) == "(no name — use kanji name X <name> to add one)"
 
     def test_none_name(self):
-        """Returns '(no WK name)' when component has name=None."""
+        """Returns hint message when component has name=None."""
         components = [{"char": "世", "name": None}]
-        assert _find_name("世", components) == "(no WK name)"
+        assert _find_name("世", components) == "(no name — use kanji name 世 <name> to add one)"

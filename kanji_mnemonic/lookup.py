@@ -35,6 +35,7 @@ def lookup_kanji(
     wk_kanji_subjects: dict | None = None,
     kradfile: dict | None = None,
     kanjidic: dict | None = None,
+    personal_radicals: dict | None = None,
 ) -> KanjiProfile:
     profile = KanjiProfile(character=char)
 
@@ -172,6 +173,12 @@ def lookup_kanji(
             profile.wk_components.append({"char": comp_char, "name": name})
             existing_chars.add(comp_char)
 
+    # Apply personal radical name overrides
+    if personal_radicals:
+        for comp in profile.wk_components:
+            if comp["char"] in personal_radicals:
+                comp["name"] = personal_radicals[comp["char"]]
+
     return profile
 
 
@@ -240,8 +247,10 @@ def format_profile(profile: KanjiProfile) -> str:
     if profile.wk_components:
         lines.append("WaniKani Components:")
         for c in profile.wk_components:
-            name = c["name"] or "(no WK name)"
-            lines.append(f"  {c['char']} → {name}")
+            if c["name"]:
+                lines.append(f"  {c['char']} → {c['name']}")
+            else:
+                lines.append(f"  {c['char']} → (no name — use kanji name {c['char']} <name> to add one)")
 
     if profile.keisei_type in ("comp_phonetic", "comp_phonetic_inferred"):
         lines.append("")
@@ -281,5 +290,5 @@ def format_profile(profile: KanjiProfile) -> str:
 def _find_name(char: str, components: list[dict]) -> str:
     for c in components:
         if c["char"] == char:
-            return c["name"] or "(no WK name)"
-    return "(no WK name)"
+            return c["name"] or f"(no name — use kanji name {char} <name> to add one)"
+    return f"(no name — use kanji name {char} <name> to add one)"

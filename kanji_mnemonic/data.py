@@ -9,6 +9,7 @@ from pathlib import Path
 import requests
 
 CACHE_DIR = Path(os.environ.get("KANJI_MNEMONIC_CACHE", Path.home() / ".cache" / "kanji-mnemonic"))
+CONFIG_DIR = Path(os.environ.get("KANJI_MNEMONIC_CONFIG", Path.home() / ".config" / "kanji"))
 
 KEISEI_BASE = "https://raw.githubusercontent.com/mwil/wanikani-userscripts/8ee517737d604f1df0ff103a33b69f1f07218815/wanikani-phonetic-compounds/db"
 DB_URLS = {
@@ -281,6 +282,31 @@ def load_kanjidic() -> dict:
     cache_path.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
     print(f"  Cached {len(result)} Kanjidic2 entries.")
     return result
+
+
+def load_personal_radicals() -> dict:
+    """Load the user's personal radical name dictionary.
+
+    Returns {char: name} dict, or empty dict if the file doesn't exist.
+    """
+    path = CONFIG_DIR / "radicals.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save_personal_radical(char: str, name: str) -> None:
+    """Save or update a personal radical name.
+
+    Creates the config directory and file if they don't exist.
+    """
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    path = CONFIG_DIR / "radicals.json"
+    data = {}
+    if path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+    data[char] = name
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
 
 def clear_cache():
