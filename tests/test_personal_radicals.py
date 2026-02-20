@@ -78,9 +78,7 @@ class TestSavePersonalRadical:
         from kanji_mnemonic.data import save_personal_radical
 
         save_personal_radical("世", "World")
-        data = json.loads(
-            (config_dir / "radicals.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((config_dir / "radicals.json").read_text(encoding="utf-8"))
         assert data == {"世": "World"}
 
     def test_updates_existing_radical(self, config_dir, personal_radicals_file):
@@ -88,9 +86,7 @@ class TestSavePersonalRadical:
         from kanji_mnemonic.data import save_personal_radical
 
         save_personal_radical("世", "Generation")
-        data = json.loads(
-            (config_dir / "radicals.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((config_dir / "radicals.json").read_text(encoding="utf-8"))
         assert data["世"] == "Generation"
         # Other entries untouched
         assert data["丶"] == "Drop"
@@ -103,9 +99,7 @@ class TestSavePersonalRadical:
         monkeypatch.setattr("kanji_mnemonic.data.CONFIG_DIR", cfg)
         save_personal_radical("世", "World")
         assert (cfg / "radicals.json").exists()
-        data = json.loads(
-            (cfg / "radicals.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((cfg / "radicals.json").read_text(encoding="utf-8"))
         assert data == {"世": "World"}
 
 
@@ -397,9 +391,7 @@ class TestCmdName:
 
         args = argparse.Namespace(radical="世", name="World")
         cmd_name(args)
-        data = json.loads(
-            (config_dir / "radicals.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((config_dir / "radicals.json").read_text(encoding="utf-8"))
         assert data["世"] == "World"
 
     def test_updates_existing_name(self, config_dir, personal_radicals_file, capsys):
@@ -408,9 +400,7 @@ class TestCmdName:
 
         args = argparse.Namespace(radical="世", name="Generation")
         cmd_name(args)
-        data = json.loads(
-            (config_dir / "radicals.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((config_dir / "radicals.json").read_text(encoding="utf-8"))
         assert data["世"] == "Generation"
 
     def test_prints_confirmation(self, config_dir, capsys):
@@ -432,7 +422,9 @@ class TestCmdName:
 class TestCmdNames:
     """Tests for 'kanji names' CLI command."""
 
-    def test_lists_all_personal_radicals(self, config_dir, personal_radicals_file, capsys):
+    def test_lists_all_personal_radicals(
+        self, config_dir, personal_radicals_file, capsys
+    ):
         """'kanji names' prints all personal radical entries."""
         from kanji_mnemonic.cli import cmd_names
 

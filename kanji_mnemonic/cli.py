@@ -59,6 +59,7 @@ def load_all_data(wk_api_key: str | None):
         # Try to load from cache even without key
         from .data import CACHE_DIR
         import json
+
         rad_cache = CACHE_DIR / "wk_radicals.json"
         subj_cache = CACHE_DIR / "wk_kanji_subjects.json"
         if rad_cache.exists():
@@ -66,19 +67,54 @@ def load_all_data(wk_api_key: str | None):
         if subj_cache.exists():
             wk_kanji_subjects = json.loads(subj_cache.read_text(encoding="utf-8"))
         if not wk_radicals:
-            print("Warning: No WK_API_KEY set and no cached radical data.", file=sys.stderr)
+            print(
+                "Warning: No WK_API_KEY set and no cached radical data.",
+                file=sys.stderr,
+            )
             print("  Set WK_API_KEY for full radical name resolution.", file=sys.stderr)
-            print("  Get your key at: https://www.wanikani.com/settings/personal_access_tokens", file=sys.stderr)
+            print(
+                "  Get your key at: https://www.wanikani.com/settings/personal_access_tokens",
+                file=sys.stderr,
+            )
 
     personal_radicals = load_personal_radicals()
 
-    return kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals
+    return (
+        kanji_db,
+        phonetic_db,
+        wk_kanji_db,
+        wk_radicals,
+        wk_kanji_subjects,
+        kradfile,
+        kanjidic,
+        personal_radicals,
+    )
 
 
-def cmd_lookup(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals):
+def cmd_lookup(
+    args,
+    kanji_db,
+    phonetic_db,
+    wk_kanji_db,
+    wk_radicals,
+    wk_kanji_subjects,
+    kradfile,
+    kanjidic,
+    personal_radicals,
+):
     """Just show the kanji profile without generating a mnemonic."""
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals=personal_radicals)
+        profile = lookup_kanji(
+            char,
+            kanji_db,
+            phonetic_db,
+            wk_kanji_db,
+            wk_radicals,
+            wk_kanji_subjects,
+            kradfile,
+            kanjidic,
+            personal_radicals=personal_radicals,
+        )
         print(format_profile(profile))
         print()
 
@@ -102,7 +138,9 @@ def _stream_mnemonic(client, model, user_msg):
 def _edit_mnemonic(current_text):
     """Open the user's editor with the current mnemonic text. Returns edited text."""
     editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "vi"
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".md", delete=False, encoding="utf-8"
+    ) as f:
         f.write(current_text)
         tmppath = f.name
     try:
@@ -113,12 +151,32 @@ def _edit_mnemonic(current_text):
         Path(tmppath).unlink(missing_ok=True)
 
 
-def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals):
+def cmd_memorize(
+    args,
+    kanji_db,
+    phonetic_db,
+    wk_kanji_db,
+    wk_radicals,
+    wk_kanji_subjects,
+    kradfile,
+    kanjidic,
+    personal_radicals,
+):
     """Generate a mnemonic for the given kanji."""
     client = get_anthropic_client()
 
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals=personal_radicals)
+        profile = lookup_kanji(
+            char,
+            kanji_db,
+            phonetic_db,
+            wk_kanji_db,
+            wk_radicals,
+            wk_kanji_subjects,
+            kradfile,
+            kanjidic,
+            personal_radicals=personal_radicals,
+        )
 
         # Show the profile first
         print(format_profile(profile))
@@ -157,10 +215,30 @@ def cmd_memorize(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji
                 break
 
 
-def cmd_prompt(args, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals):
+def cmd_prompt(
+    args,
+    kanji_db,
+    phonetic_db,
+    wk_kanji_db,
+    wk_radicals,
+    wk_kanji_subjects,
+    kradfile,
+    kanjidic,
+    personal_radicals,
+):
     """Show the assembled prompt without calling the LLM."""
     for char in args.kanji:
-        profile = lookup_kanji(char, kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals=personal_radicals)
+        profile = lookup_kanji(
+            char,
+            kanji_db,
+            phonetic_db,
+            wk_kanji_db,
+            wk_radicals,
+            wk_kanji_subjects,
+            kradfile,
+            kanjidic,
+            personal_radicals=personal_radicals,
+        )
         print("── SYSTEM PROMPT ──")
         print(get_system_prompt())
         print()
@@ -211,24 +289,41 @@ def main():
         description="Generate kanji mnemonics using WaniKani radicals and phonetic-semantic data",
     )
     parser.add_argument(
-        "--model", default="claude-sonnet-4-20250514",
+        "--model",
+        default="claude-sonnet-4-20250514",
         help="Anthropic model to use (default: claude-sonnet-4-20250514)",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # --- memorize (default) ---
-    p_memorize = subparsers.add_parser("memorize", aliases=["m"], help="Generate a mnemonic")
+    p_memorize = subparsers.add_parser(
+        "memorize", aliases=["m"], help="Generate a mnemonic"
+    )
     p_memorize.add_argument("kanji", nargs="+", help="One or more kanji characters")
-    p_memorize.add_argument("-c", "--context", help="Extra context to include (e.g., 'I always mix this up with 待')")
-    p_memorize.add_argument("-n", "--no-interactive", action="store_true", default=False, help="Save mnemonic without interactive prompt")
+    p_memorize.add_argument(
+        "-c",
+        "--context",
+        help="Extra context to include (e.g., 'I always mix this up with 待')",
+    )
+    p_memorize.add_argument(
+        "-n",
+        "--no-interactive",
+        action="store_true",
+        default=False,
+        help="Save mnemonic without interactive prompt",
+    )
 
     # --- lookup ---
-    p_lookup = subparsers.add_parser("lookup", aliases=["l"], help="Show kanji profile without LLM call")
+    p_lookup = subparsers.add_parser(
+        "lookup", aliases=["l"], help="Show kanji profile without LLM call"
+    )
     p_lookup.add_argument("kanji", nargs="+", help="One or more kanji characters")
 
     # --- prompt ---
-    p_prompt = subparsers.add_parser("prompt", aliases=["p"], help="Show the assembled prompt (debug)")
+    p_prompt = subparsers.add_parser(
+        "prompt", aliases=["p"], help="Show the assembled prompt (debug)"
+    )
     p_prompt.add_argument("kanji", nargs="+", help="One or more kanji characters")
     p_prompt.add_argument("-c", "--context", help="Extra context to include")
 
@@ -241,7 +336,9 @@ def main():
     subparsers.add_parser("names", help="List all personal radical names")
 
     # --- show ---
-    p_show = subparsers.add_parser("show", aliases=["s"], help="Show saved mnemonic for a kanji")
+    p_show = subparsers.add_parser(
+        "show", aliases=["s"], help="Show saved mnemonic for a kanji"
+    )
     p_show.add_argument("kanji", nargs="+", help="One or more kanji characters")
 
     # --- clear-cache ---

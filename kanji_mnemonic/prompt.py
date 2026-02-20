@@ -50,11 +50,20 @@ def build_prompt(profile: KanjiProfile, user_context: str | None = None) -> str:
         parts.append(f"\n── Additional context from user ──\n{user_context}")
 
     parts.append("\n── Please generate ──")
-    parts.append("1. **Meaning mnemonic**: A short story connecting the WK radical names to the meaning")
-    parts.append("2. **Reading mnemonic**: A story/hook for remembering the primary reading")
+    parts.append(
+        "1. **Meaning mnemonic**: A short story connecting the WK radical names to the meaning"
+    )
+    parts.append(
+        "2. **Reading mnemonic**: A story/hook for remembering the primary reading"
+    )
 
-    if profile.keisei_type in ("comp_phonetic", "comp_phonetic_inferred") and profile.phonetic_family:
-        parts.append("3. **Phonetic family note**: A brief note about the phonetic pattern to reinforce")
+    if (
+        profile.keisei_type in ("comp_phonetic", "comp_phonetic_inferred")
+        and profile.phonetic_family
+    ):
+        parts.append(
+            "3. **Phonetic family note**: A brief note about the phonetic pattern to reinforce"
+        )
 
     return "\n".join(parts)
 

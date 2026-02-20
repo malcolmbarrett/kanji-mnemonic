@@ -90,7 +90,9 @@ class TestLoadOrDownload:
         cache_file = tmp_cache_dir / "test_db.json"
         cache_file.write_text(json.dumps(cached), encoding="utf-8")
 
-        result = _load_or_download("test_db", "https://example.com/should-not-be-called")
+        result = _load_or_download(
+            "test_db", "https://example.com/should-not-be-called"
+        )
 
         assert result == cached
 
@@ -195,7 +197,15 @@ class TestFetchWkRadicals:
             next_url=page2_url,
         )
         page2 = _wk_radical_page(
-            [{"id": 2, "characters": "山", "name": "Mountain", "level": 1, "slug": "mountain"}],
+            [
+                {
+                    "id": 2,
+                    "characters": "山",
+                    "name": "Mountain",
+                    "level": 1,
+                    "slug": "mountain",
+                }
+            ],
             next_url=None,
         )
 
@@ -268,7 +278,15 @@ class TestFetchWkRadicals:
     def test_writes_cache(self, tmp_cache_dir):
         """After a fresh fetch, wk_radicals.json is written with correct content."""
         page = _wk_radical_page(
-            [{"id": 1, "characters": "口", "name": "Mouth", "level": 1, "slug": "mouth"}]
+            [
+                {
+                    "id": 1,
+                    "characters": "口",
+                    "name": "Mouth",
+                    "level": 1,
+                    "slug": "mouth",
+                }
+            ]
         )
         responses.add(
             responses.GET,
@@ -339,9 +357,7 @@ class TestFetchWkKanjiSubjects:
     def test_two_pass_fetch(self, tmp_cache_dir):
         """Both radical (first pass) and kanji (second pass) endpoints are
         called, producing a complete kanji map."""
-        radical_page = _wk_radical_page(
-            [{"id": 42, "characters": "言", "name": "Say"}]
-        )
+        radical_page = _wk_radical_page([{"id": 42, "characters": "言", "name": "Say"}])
         kanji_page = _wk_kanji_page(
             [
                 {

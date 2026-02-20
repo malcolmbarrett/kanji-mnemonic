@@ -14,7 +14,7 @@ from kanji_mnemonic.cli import (
     load_all_data,
     main,
 )
- 
+
 
 class TestGetWkApiKey:
     """Tests for get_wk_api_key()."""
@@ -43,8 +43,12 @@ class TestLoadAllData:
         mock_kanjidic = {"kd": 7}
 
         monkeypatch.setattr("kanji_mnemonic.cli.load_kanji_db", lambda: mock_kanji_db)
-        monkeypatch.setattr("kanji_mnemonic.cli.load_phonetic_db", lambda: mock_phonetic_db)
-        monkeypatch.setattr("kanji_mnemonic.cli.load_wk_kanji_db", lambda: mock_wk_kanji_db)
+        monkeypatch.setattr(
+            "kanji_mnemonic.cli.load_phonetic_db", lambda: mock_phonetic_db
+        )
+        monkeypatch.setattr(
+            "kanji_mnemonic.cli.load_wk_kanji_db", lambda: mock_wk_kanji_db
+        )
         monkeypatch.setattr("kanji_mnemonic.cli.load_kradfile", lambda: mock_kradfile)
         monkeypatch.setattr("kanji_mnemonic.cli.load_kanjidic", lambda: mock_kanjidic)
         monkeypatch.setattr("kanji_mnemonic.cli.load_personal_radicals", lambda: {})
@@ -59,7 +63,16 @@ class TestLoadAllData:
         fetch_rad.assert_called_once_with("fake-key")
         fetch_subj.assert_called_once_with("fake-key")
 
-        kanji_db, phonetic_db, wk_kanji_db, wk_radicals, wk_kanji_subjects, kradfile, kanjidic, personal_radicals = result
+        (
+            kanji_db,
+            phonetic_db,
+            wk_kanji_db,
+            wk_radicals,
+            wk_kanji_subjects,
+            kradfile,
+            kanjidic,
+            personal_radicals,
+        ) = result
         assert kanji_db == mock_kanji_db
         assert phonetic_db == mock_phonetic_db
         assert wk_kanji_db == mock_wk_kanji_db
@@ -187,7 +200,9 @@ class TestArgumentParsing:
 
     def test_context_flag(self, monkeypatch):
         mocks = self._setup_mocks(monkeypatch)
-        monkeypatch.setattr("sys.argv", ["kanji", "prompt", "語", "-c", "focus on onyomi"])
+        monkeypatch.setattr(
+            "sys.argv", ["kanji", "prompt", "語", "-c", "focus on onyomi"]
+        )
         main()
         mocks["cmd_prompt"].assert_called_once()
         args = mocks["cmd_prompt"].call_args[0][0]
@@ -336,7 +351,9 @@ class TestCmdMemorize:
         )
         monkeypatch.setattr("kanji_mnemonic.data.CONFIG_DIR", tmp_cache_dir)
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=True)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=True
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -369,7 +386,9 @@ class TestCmdMemorize:
         )
         monkeypatch.setattr("kanji_mnemonic.data.CONFIG_DIR", tmp_cache_dir)
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=True)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=True
+        )
         cmd_memorize(
             args,
             sample_kanji_db,

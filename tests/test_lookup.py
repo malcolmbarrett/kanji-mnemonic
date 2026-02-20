@@ -630,7 +630,9 @@ class TestComponentDeduplication:
             sample_kradfile,
         )
         chars = [c["char"] for c in profile.wk_components]
-        assert len(chars) == len(set(chars)), f"Duplicate chars in wk_components: {chars}"
+        assert len(chars) == len(set(chars)), (
+            f"Duplicate chars in wk_components: {chars}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -741,9 +743,15 @@ class TestFindName:
     def test_not_found(self):
         """Returns hint message when char is not in components."""
         components = [{"char": "言", "name": "Say"}]
-        assert _find_name("X", components) == "(no name — use kanji name X <name> to add one)"
+        assert (
+            _find_name("X", components)
+            == "(no name — use kanji name X <name> to add one)"
+        )
 
     def test_none_name(self):
         """Returns hint message when component has name=None."""
         components = [{"char": "世", "name": None}]
-        assert _find_name("世", components) == "(no name — use kanji name 世 <name> to add one)"
+        assert (
+            _find_name("世", components)
+            == "(no name — use kanji name 世 <name> to add one)"
+        )

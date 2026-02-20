@@ -15,12 +15,16 @@ class KanjiProfile:
     kunyomi: list[str] = field(default_factory=list)
     important_reading: str | None = None  # "onyomi" or "kunyomi"
     # From kanji_db (Keisei)
-    keisei_type: str | None = None  # comp_phonetic, hieroglyph, comp_indicative, indicative, unknown
+    keisei_type: str | None = (
+        None  # comp_phonetic, hieroglyph, comp_indicative, indicative, unknown
+    )
     semantic_component: str | None = None
     phonetic_component: str | None = None
     decomposition: list[str] = field(default_factory=list)
     # Component radical names (from WK)
-    wk_components: list[dict] = field(default_factory=list)  # [{"char": "x", "name": "Name"}, ...]
+    wk_components: list[dict] = field(
+        default_factory=list
+    )  # [{"char": "x", "name": "Name"}, ...]
     # Phonetic family info
     phonetic_family: dict | None = None  # from phonetic_db
     phonetic_family_kanji_details: list[dict] = field(default_factory=list)
@@ -44,8 +48,16 @@ def lookup_kanji(
     if wk_info:
         profile.wk_meaning = wk_info.get("meaning")
         profile.wk_level = wk_info.get("level")
-        profile.onyomi = [r.strip() for r in wk_info.get("onyomi", "").split(",") if r.strip()] if wk_info.get("onyomi") else []
-        profile.kunyomi = [r.strip() for r in wk_info.get("kunyomi", "").split(",") if r.strip()] if wk_info.get("kunyomi") else []
+        profile.onyomi = (
+            [r.strip() for r in wk_info.get("onyomi", "").split(",") if r.strip()]
+            if wk_info.get("onyomi")
+            else []
+        )
+        profile.kunyomi = (
+            [r.strip() for r in wk_info.get("kunyomi", "").split(",") if r.strip()]
+            if wk_info.get("kunyomi")
+            else []
+        )
         profile.important_reading = wk_info.get("important_reading")
 
     # --- Supplement/override from WK API subjects if available ---
@@ -153,7 +165,9 @@ def lookup_kanji(
     if profile.semantic_component and profile.semantic_component not in existing_chars:
         rad_info = wk_radicals.get(profile.semantic_component)
         name = rad_info["name"] if rad_info else None
-        profile.wk_components.insert(0, {"char": profile.semantic_component, "name": name})
+        profile.wk_components.insert(
+            0, {"char": profile.semantic_component, "name": name}
+        )
         existing_chars.add(profile.semantic_component)
 
     # Add phonetic component if not already present
@@ -251,7 +265,9 @@ def format_profile(profile: KanjiProfile) -> str:
             "indicative": "Simple Indicative (指事)",
             "unknown": "Unknown origin",
         }
-        lines.append(f"Type: {type_labels.get(profile.keisei_type, profile.keisei_type)}")
+        lines.append(
+            f"Type: {type_labels.get(profile.keisei_type, profile.keisei_type)}"
+        )
 
     if profile.wk_components:
         lines.append("WaniKani Components:")
@@ -259,7 +275,9 @@ def format_profile(profile: KanjiProfile) -> str:
             if c["name"]:
                 lines.append(f"  {c['char']} → {c['name']}")
             else:
-                lines.append(f"  {c['char']} → (no name — use kanji name {c['char']} <name> to add one)")
+                lines.append(
+                    f"  {c['char']} → (no name — use kanji name {c['char']} <name> to add one)"
+                )
 
     if profile.keisei_type in ("comp_phonetic", "comp_phonetic_inferred"):
         lines.append("")
@@ -287,9 +305,14 @@ def format_profile(profile: KanjiProfile) -> str:
                 reading = entry.get("onyomi", "?")
                 lines.append(f"    {entry['char']} — {meaning} ({reading})")
         if pf.get("non_compounds"):
-            lines.append(f"  ⚠ Looks similar but different reading: {', '.join(pf['non_compounds'])}")
+            lines.append(
+                f"  ⚠ Looks similar but different reading: {', '.join(pf['non_compounds'])}"
+            )
 
-    if profile.decomposition and profile.keisei_type not in ("comp_phonetic", "comp_phonetic_inferred"):
+    if profile.decomposition and profile.keisei_type not in (
+        "comp_phonetic",
+        "comp_phonetic_inferred",
+    ):
         lines.append("")
         lines.append("Decomposition: " + " + ".join(profile.decomposition))
 

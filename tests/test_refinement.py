@@ -85,7 +85,10 @@ class TestLoadMnemonics:
         result = load_mnemonics()
         assert "語" in result
         assert "山" in result
-        assert result["語"]["mnemonic"] == "Say something to five mouths and they will speak your language."
+        assert (
+            result["語"]["mnemonic"]
+            == "Say something to five mouths and they will speak your language."
+        )
         assert result["語"]["model"] == "claude-sonnet-4-20250514"
         assert result["語"]["timestamp"] == "2025-06-01T12:00:00"
 
@@ -118,7 +121,10 @@ class TestLoadMnemonicForKanji:
 
         result = load_mnemonic_for_kanji("語")
         assert result is not None
-        assert result["mnemonic"] == "Say something to five mouths and they will speak your language."
+        assert (
+            result["mnemonic"]
+            == "Say something to five mouths and they will speak your language."
+        )
         assert result["model"] == "claude-sonnet-4-20250514"
         assert result["timestamp"] == "2025-06-01T12:00:00"
 
@@ -147,9 +153,7 @@ class TestSaveMnemonic:
         from kanji_mnemonic.data import save_mnemonic
 
         save_mnemonic("語", "A great mnemonic", "claude-sonnet-4-20250514")
-        data = json.loads(
-            (config_dir / "mnemonics.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((config_dir / "mnemonics.json").read_text(encoding="utf-8"))
         assert "語" in data
         assert data["語"]["mnemonic"] == "A great mnemonic"
         assert data["語"]["model"] == "claude-sonnet-4-20250514"
@@ -159,13 +163,14 @@ class TestSaveMnemonic:
         from kanji_mnemonic.data import save_mnemonic
 
         save_mnemonic("語", "Updated mnemonic", "claude-haiku-4-5-20251001")
-        data = json.loads(
-            (config_dir / "mnemonics.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((config_dir / "mnemonics.json").read_text(encoding="utf-8"))
         assert data["語"]["mnemonic"] == "Updated mnemonic"
         assert data["語"]["model"] == "claude-haiku-4-5-20251001"
         # Other entries untouched
-        assert data["山"]["mnemonic"] == "Three peaks rising from the earth form a mountain."
+        assert (
+            data["山"]["mnemonic"]
+            == "Three peaks rising from the earth form a mountain."
+        )
 
     def test_creates_directory_if_missing(self, tmp_path, monkeypatch):
         from kanji_mnemonic.data import save_mnemonic
@@ -174,18 +179,14 @@ class TestSaveMnemonic:
         monkeypatch.setattr("kanji_mnemonic.data.CONFIG_DIR", cfg)
         save_mnemonic("語", "A mnemonic", "test-model")
         assert (cfg / "mnemonics.json").exists()
-        data = json.loads(
-            (cfg / "mnemonics.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((cfg / "mnemonics.json").read_text(encoding="utf-8"))
         assert data["語"]["mnemonic"] == "A mnemonic"
 
     def test_timestamp_is_iso_format(self, config_dir):
         from kanji_mnemonic.data import save_mnemonic
 
         save_mnemonic("語", "A mnemonic", "test-model")
-        data = json.loads(
-            (config_dir / "mnemonics.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((config_dir / "mnemonics.json").read_text(encoding="utf-8"))
         # Should not raise
         datetime.fromisoformat(data["語"]["timestamp"])
 
@@ -194,9 +195,7 @@ class TestSaveMnemonic:
         from kanji_mnemonic.data import save_mnemonic
 
         save_mnemonic("語", "Test mnemonic", "test-model")
-        data = json.loads(
-            (config_dir / "mnemonics.json").read_text(encoding="utf-8")
-        )
+        data = json.loads((config_dir / "mnemonics.json").read_text(encoding="utf-8"))
         entry = data["語"]
         assert set(entry.keys()) == {"mnemonic", "model", "timestamp"}
         assert isinstance(entry["mnemonic"], str)
@@ -233,7 +232,9 @@ class TestInteractiveAccept:
         )
         monkeypatch.setattr("builtins.input", MagicMock(return_value="a"))
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -271,7 +272,9 @@ class TestInteractiveAccept:
         )
         monkeypatch.setattr("builtins.input", MagicMock(return_value="a"))
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -320,7 +323,9 @@ class TestInteractiveRetry:
         )
         monkeypatch.setattr("builtins.input", MagicMock(side_effect=["r", "a"]))
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -360,7 +365,9 @@ class TestInteractiveRetry:
         )
         monkeypatch.setattr("builtins.input", MagicMock(side_effect=["r", "a"]))
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -414,7 +421,9 @@ class TestInteractiveEdit:
         monkeypatch.setattr("subprocess.call", fake_editor)
         monkeypatch.setenv("EDITOR", "fake-editor")
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -462,7 +471,9 @@ class TestInteractiveEdit:
 
         monkeypatch.setattr("subprocess.call", fake_editor)
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -506,7 +517,9 @@ class TestInteractiveEdit:
 
         monkeypatch.setattr("subprocess.call", fake_editor)
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -552,7 +565,9 @@ class TestInteractiveQuit:
         )
         monkeypatch.setattr("builtins.input", MagicMock(return_value="q"))
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -590,7 +605,9 @@ class TestInteractiveQuit:
         )
         monkeypatch.setattr("builtins.input", MagicMock(return_value="q"))
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -637,7 +654,9 @@ class TestNoInteractive:
         mock_input = MagicMock()
         monkeypatch.setattr("builtins.input", mock_input)
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=True)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=True
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -675,7 +694,9 @@ class TestNoInteractive:
         )
         monkeypatch.setattr("builtins.input", MagicMock())
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=True)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=True
+        )
         cmd_memorize(
             args,
             sample_kanji_db,
@@ -726,9 +747,13 @@ class TestCmdShow:
 
         output = capsys.readouterr().out
         assert "語" in output
-        assert "Say something to five mouths and they will speak your language." in output
+        assert (
+            "Say something to five mouths and they will speak your language." in output
+        )
 
-    def test_show_includes_model_and_timestamp(self, config_dir, mnemonics_file, capsys):
+    def test_show_includes_model_and_timestamp(
+        self, config_dir, mnemonics_file, capsys
+    ):
         from kanji_mnemonic.cli import cmd_show
 
         args = argparse.Namespace(kanji=["語"])
@@ -841,7 +866,9 @@ class TestAutoSaveTiming:
 
         monkeypatch.setattr("builtins.input", check_file_exists_then_accept)
 
-        args = argparse.Namespace(kanji=["語"], context=None, model="test-model", no_interactive=False)
+        args = argparse.Namespace(
+            kanji=["語"], context=None, model="test-model", no_interactive=False
+        )
         cmd_memorize(
             args,
             sample_kanji_db,

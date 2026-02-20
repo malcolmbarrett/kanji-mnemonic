@@ -8,8 +8,12 @@ from pathlib import Path
 
 import requests
 
-CACHE_DIR = Path(os.environ.get("KANJI_MNEMONIC_CACHE", Path.home() / ".cache" / "kanji-mnemonic"))
-CONFIG_DIR = Path(os.environ.get("KANJI_MNEMONIC_CONFIG", Path.home() / ".config" / "kanji"))
+CACHE_DIR = Path(
+    os.environ.get("KANJI_MNEMONIC_CACHE", Path.home() / ".cache" / "kanji-mnemonic")
+)
+CONFIG_DIR = Path(
+    os.environ.get("KANJI_MNEMONIC_CONFIG", Path.home() / ".config" / "kanji")
+)
 
 KEISEI_BASE = "https://raw.githubusercontent.com/mwil/wanikani-userscripts/8ee517737d604f1df0ff103a33b69f1f07218815/wanikani-phonetic-compounds/db"
 DB_URLS = {
@@ -106,7 +110,7 @@ def fetch_wk_kanji_subjects(api_key: str) -> dict:
     kanji_map = {}  # character -> subject data
     # Also need radical subjects for ID->char mapping
     radical_id_map = {}  # subject_id -> character
-    
+
     # First pass: get radicals to build ID map
     url = f"{WK_API_BASE}/subjects?types=radical"
     headers = {"Authorization": f"Bearer {api_key}"}
@@ -138,8 +142,14 @@ def fetch_wk_kanji_subjects(api_key: str) -> dict:
                 kanji_map[char] = {
                     "meanings": [m["meaning"] for m in d["meanings"]],
                     "readings": {
-                        "onyomi": [r["reading"] for r in d["readings"] if r["type"] == "onyomi"],
-                        "kunyomi": [r["reading"] for r in d["readings"] if r["type"] == "kunyomi"],
+                        "onyomi": [
+                            r["reading"] for r in d["readings"] if r["type"] == "onyomi"
+                        ],
+                        "kunyomi": [
+                            r["reading"]
+                            for r in d["readings"]
+                            if r["type"] == "kunyomi"
+                        ],
                     },
                     "component_radicals": component_chars,
                     "level": d["level"],
@@ -189,16 +199,15 @@ def load_kradfile() -> dict:
     return kradfile
 
 
-KANJIDIC_API_URL = "https://api.github.com/repos/scriptin/jmdict-simplified/releases/latest"
+KANJIDIC_API_URL = (
+    "https://api.github.com/repos/scriptin/jmdict-simplified/releases/latest"
+)
 
 
 def _katakana_to_hiragana(text: str) -> str:
     """Convert katakana characters to hiragana. Non-katakana passes through."""
     # Katakana block: U+30A1..U+30F6, offset from hiragana is 0x60
-    return "".join(
-        chr(ord(c) - 0x60) if "\u30A1" <= c <= "\u30F6" else c
-        for c in text
-    )
+    return "".join(chr(ord(c) - 0x60) if "\u30a1" <= c <= "\u30f6" else c for c in text)
 
 
 def _parse_kanjidic(raw: dict) -> dict:
@@ -257,12 +266,16 @@ def load_kanjidic() -> dict:
 
     tarball_url = None
     for asset in release.get("assets", []):
-        if asset["name"].startswith("kanjidic2-en") and asset["name"].endswith(".json.tgz"):
+        if asset["name"].startswith("kanjidic2-en") and asset["name"].endswith(
+            ".json.tgz"
+        ):
             tarball_url = asset["browser_download_url"]
             break
 
     if tarball_url is None:
-        raise RuntimeError("Could not find kanjidic2-en tarball in latest jmdict-simplified release")
+        raise RuntimeError(
+            "Could not find kanjidic2-en tarball in latest jmdict-simplified release"
+        )
 
     # Download and extract the tarball
     resp = requests.get(tarball_url, timeout=120)
