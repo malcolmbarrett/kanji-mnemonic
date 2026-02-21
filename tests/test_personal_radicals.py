@@ -258,9 +258,9 @@ class TestPersonalRadicalsInPhoneticFamily:
         )
         output = format_profile(profile)
         assert "Tongue Radical" in output
-        assert "(no WK name)" not in output
+        assert "(WK:" not in output
 
-    def test_phonetic_family_without_personal_radical_still_shows_no_wk_name(
+    def test_phonetic_family_without_personal_radical_still_shows_no_name(
         self,
         sample_kanji_db,
         sample_phonetic_db,
@@ -269,7 +269,7 @@ class TestPersonalRadicalsInPhoneticFamily:
         sample_wk_kanji_subjects,
         sample_kradfile,
     ):
-        """Without a personal radical for the phonetic component, '(no WK name)' is still shown."""
+        """Without a personal radical for the phonetic component, '(no name)' is shown."""
         from kanji_mnemonic.lookup import format_profile, lookup_kanji
 
         profile = lookup_kanji(
@@ -283,7 +283,7 @@ class TestPersonalRadicalsInPhoneticFamily:
             personal_radicals={},
         )
         output = format_profile(profile)
-        assert "(no WK name)" in output
+        assert "(no name)" in output
 
     def test_phonetic_family_personal_overrides_existing_wk_name(
         self,
@@ -485,3 +485,101 @@ class TestNameCommandDispatch:
         monkeypatch.setattr("sys.argv", ["kanji", "names"])
         main()
         mock_cmd.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Tests: WK: prefix removed from Phonetic Family section (bd-1qt)
+# ---------------------------------------------------------------------------
+
+
+class TestWkPrefixRemoved:
+    """Verify format_profile() does not add 'WK:' prefix to phonetic component names.
+
+    The Phonetic Family section should show just '(Name)' regardless of
+    whether the name came from WK, personal radicals, or is missing.
+    """
+
+    def test_wk_sourced_name_has_no_wk_prefix(
+        self,
+        sample_kanji_db,
+        sample_phonetic_db,
+        sample_wk_kanji_db,
+        sample_wk_radicals,
+        sample_wk_kanji_subjects,
+        sample_kradfile,
+    ):
+        """WK-sourced phonetic name shows (Name) not (WK: Name)."""
+        from kanji_mnemonic.lookup import format_profile, lookup_kanji
+
+        # 語 has phonetic 吾 with wk-radical: "five-mouths" from Keisei
+        profile = lookup_kanji(
+            "語",
+            sample_kanji_db,
+            sample_phonetic_db,
+            sample_wk_kanji_db,
+            sample_wk_radicals,
+            sample_wk_kanji_subjects,
+            sample_kradfile,
+            personal_radicals={},
+        )
+        output = format_profile(profile)
+        assert "(five-mouths)" in output
+        assert "(WK:" not in output
+
+    def test_personal_radical_name_has_no_wk_prefix(
+        self,
+        sample_kanji_db,
+        sample_phonetic_db,
+        sample_wk_kanji_db,
+        sample_wk_radicals,
+        sample_wk_kanji_subjects,
+        sample_kradfile,
+    ):
+        """Personal radical name shows (Name) not (WK: Name)."""
+        from kanji_mnemonic.lookup import format_profile, lookup_kanji
+
+        # 話 has phonetic 舌 with no keisei wk-radical; personal name overrides
+        personal_radicals = {"舌": "Tongue"}
+        profile = lookup_kanji(
+            "話",
+            sample_kanji_db,
+            sample_phonetic_db,
+            sample_wk_kanji_db,
+            sample_wk_radicals,
+            sample_wk_kanji_subjects,
+            sample_kradfile,
+            personal_radicals=personal_radicals,
+        )
+        output = format_profile(profile)
+        assert "(Tongue)" in output
+        assert "(WK:" not in output
+
+    def test_missing_name_shows_no_name_fallback(
+        self,
+        sample_kanji_db,
+        sample_phonetic_db,
+        sample_wk_kanji_db,
+        sample_wk_kanji_subjects,
+        sample_kradfile,
+    ):
+        """Missing name shows '(no name)' not '(no WK name)'."""
+        from kanji_mnemonic.lookup import format_profile, lookup_kanji
+
+        # 話 has phonetic 舌; remove 舌 from wk_radicals so no name source exists
+        wk_radicals_no_tongue = {
+            "言": {"name": "Say", "level": 2, "slug": "say"},
+        }
+        profile = lookup_kanji(
+            "話",
+            sample_kanji_db,
+            sample_phonetic_db,
+            sample_wk_kanji_db,
+            wk_radicals_no_tongue,
+            sample_wk_kanji_subjects,
+            sample_kradfile,
+            personal_radicals={},
+        )
+        output = format_profile(profile)
+        assert "(no name)" in output
+        assert "(no WK name)" not in output
+        assert "(WK:" not in output
