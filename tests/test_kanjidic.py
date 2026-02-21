@@ -43,7 +43,7 @@ import responses
 # ---------------------------------------------------------------------------
 
 
-def _kanjidic2_entry(literal, groups=None, nanori=None):
+def _kanjidic2_entry(literal, groups=None, nanori=None, misc=None):
     """Build a single kanjidic2 character entry."""
     rm = None
     if groups is not None:
@@ -52,7 +52,7 @@ def _kanjidic2_entry(literal, groups=None, nanori=None):
         "literal": literal,
         "codepoints": [],
         "radicals": [],
-        "misc": {},
+        "misc": misc or {},
         "dictionaryReferences": [],
         "queryCodes": [],
         "readingMeaning": rm,
@@ -109,6 +109,7 @@ ENTRY_A = _kanjidic2_entry(
             ],
         }
     ],
+    misc={"grade": 8, "strokeCounts": [7], "frequency": 1509, "variants": [], "radicalNames": []},
 )
 
 # 圧 — has on'yomi アツ (katakana, multi-mora), English meaning
@@ -126,9 +127,10 @@ ENTRY_ATSU = _kanjidic2_entry(
             ],
         }
     ],
+    misc={"grade": 5, "strokeCounts": [5], "frequency": 640, "variants": [], "radicalNames": []},
 )
 
-# 鬱 — complex kanji with multiple on readings, no kun
+# 鬱 — complex kanji with multiple on readings, no kun; no grade or frequency
 ENTRY_UTSU = _kanjidic2_entry(
     "鬱",
     groups=[
@@ -142,6 +144,7 @@ ENTRY_UTSU = _kanjidic2_entry(
             ],
         }
     ],
+    misc={"strokeCounts": [29], "variants": [], "radicalNames": []},
 )
 
 # 々 — readingMeaning is null (no readings/meanings)
@@ -196,21 +199,29 @@ def sample_kanjidic():
             "meanings": ["Asia", "rank next"],
             "onyomi": ["あ"],
             "kunyomi": ["つ.ぐ"],
+            "grade": 8,
+            "frequency": 1509,
         },
         "圧": {
             "meanings": ["pressure", "push"],
             "onyomi": ["あつ"],
             "kunyomi": ["お.す"],
+            "grade": 5,
+            "frequency": 640,
         },
         "鬱": {
             "meanings": ["gloom", "depression"],
             "onyomi": ["うつ"],
             "kunyomi": [],
+            "grade": None,
+            "frequency": None,
         },
         "丑": {
             "meanings": ["sign of the ox", "twist"],
             "onyomi": ["ちゅう"],
             "kunyomi": ["うし", "ひねる"],
+            "grade": None,
+            "frequency": None,
         },
         # 々 has no readingMeaning, so it should be omitted or have empty lists
     }
@@ -374,6 +385,42 @@ class TestParseKanjidic:
 
         assert result["亜"]["onyomi"] == ["あ"]
         assert result["亜"]["kunyomi"] == []
+
+    def test_extracts_grade(self):
+        """Parsed entry includes grade from misc section."""
+        from kanji_mnemonic.data import _parse_kanjidic
+
+        raw = _kanjidic2_json([ENTRY_A])
+        result = _parse_kanjidic(raw)
+
+        assert result["亜"]["grade"] == 8
+
+    def test_extracts_frequency(self):
+        """Parsed entry includes frequency from misc section."""
+        from kanji_mnemonic.data import _parse_kanjidic
+
+        raw = _kanjidic2_json([ENTRY_ATSU])
+        result = _parse_kanjidic(raw)
+
+        assert result["圧"]["frequency"] == 640
+
+    def test_missing_grade_is_none(self):
+        """Entries without grade in misc get grade=None."""
+        from kanji_mnemonic.data import _parse_kanjidic
+
+        raw = _kanjidic2_json([ENTRY_UTSU])
+        result = _parse_kanjidic(raw)
+
+        assert result["鬱"]["grade"] is None
+
+    def test_missing_frequency_is_none(self):
+        """Entries without frequency in misc get frequency=None."""
+        from kanji_mnemonic.data import _parse_kanjidic
+
+        raw = _kanjidic2_json([ENTRY_UTSU])
+        result = _parse_kanjidic(raw)
+
+        assert result["鬱"]["frequency"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -696,6 +743,75 @@ class TestLookupKanjiKanjidicFallback:
 
         assert profile.wk_meaning is None
         assert profile.onyomi == []
+
+    def test_fills_grade(self, sample_kanjidic):
+        """lookup_kanji() populates joyo_grade from kanjidic."""
+        from kanji_mnemonic.lookup import lookup_kanji
+
+        profile = lookup_kanji(
+            "圧",
+            {},
+            {},
+            {},
+            {},
+            None,
+            None,
+            kanjidic=sample_kanjidic,
+        )
+
+        assert profile.joyo_grade == 5
+
+    def test_fills_frequency(self, sample_kanjidic):
+        """lookup_kanji() populates frequency_rank from kanjidic."""
+        from kanji_mnemonic.lookup import lookup_kanji
+
+        profile = lookup_kanji(
+            "圧",
+            {},
+            {},
+            {},
+            {},
+            None,
+            None,
+            kanjidic=sample_kanjidic,
+        )
+
+        assert profile.frequency_rank == 640
+
+    def test_missing_grade_stays_none(self, sample_kanjidic):
+        """When kanjidic entry has no grade, joyo_grade stays None."""
+        from kanji_mnemonic.lookup import lookup_kanji
+
+        profile = lookup_kanji(
+            "鬱",
+            {},
+            {},
+            {},
+            {},
+            None,
+            None,
+            kanjidic=sample_kanjidic,
+        )
+
+        assert profile.joyo_grade is None
+
+    def test_no_kanjidic_grade_stays_none(self):
+        """When kanjidic=None, joyo_grade stays None."""
+        from kanji_mnemonic.lookup import lookup_kanji
+
+        profile = lookup_kanji(
+            "亜",
+            {},
+            {},
+            {},
+            {},
+            None,
+            None,
+            kanjidic=None,
+        )
+
+        assert profile.joyo_grade is None
+        assert profile.frequency_rank is None
 
 
 # ---------------------------------------------------------------------------
