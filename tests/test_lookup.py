@@ -755,3 +755,177 @@ class TestFindName:
             _find_name("世", components)
             == "(no name — use kanji name 世 <name> to add one)"
         )
+
+
+# ---------------------------------------------------------------------------
+# TestTypeOnlyKeiseiWithKradfileFallback
+# ---------------------------------------------------------------------------
+
+
+class TestTypeOnlyKeiseiWithKradfileFallback:
+    """Tests for kanji with a keisei type but no decomposition (bd-2jq).
+
+    Kanji like 瓦 (hieroglyph) and 蓋 (unknown) have a keisei entry with a
+    type classification but empty decomposition/components. KRADFILE should
+    still be used for component breakdown in these cases.
+    """
+
+    def test_hieroglyph_preserves_keisei_type(
+        self,
+        sample_phonetic_db,
+        sample_wk_radicals,
+    ):
+        """A hieroglyph with empty decomposition preserves its keisei_type."""
+        kanji_db = {
+            "瓦": {
+                "type": "hieroglyph",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": ["ガ"],
+            },
+        }
+        kradfile = {"瓦": ["一", "瓦"]}
+        profile = lookup_kanji(
+            "瓦",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            sample_wk_radicals,
+            kradfile=kradfile,
+        )
+        assert profile.keisei_type == "hieroglyph"
+
+    def test_hieroglyph_gets_kradfile_decomposition(
+        self,
+        sample_phonetic_db,
+        sample_wk_radicals,
+    ):
+        """A hieroglyph with empty keisei decomposition gets components from KRADFILE."""
+        kanji_db = {
+            "瓦": {
+                "type": "hieroglyph",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": ["ガ"],
+            },
+        }
+        kradfile = {"瓦": ["一", "瓦"]}
+        profile = lookup_kanji(
+            "瓦",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            sample_wk_radicals,
+            kradfile=kradfile,
+        )
+        assert profile.decomposition == ["一", "瓦"]
+
+    def test_hieroglyph_resolves_component_names(
+        self,
+        sample_phonetic_db,
+    ):
+        """KRADFILE components for a type-only entry get WK radical names."""
+        kanji_db = {
+            "瓦": {
+                "type": "hieroglyph",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": ["ガ"],
+            },
+        }
+        wk_radicals = {
+            "一": {"name": "Ground", "level": 1, "slug": "ground"},
+        }
+        kradfile = {"瓦": ["一", "瓦"]}
+        profile = lookup_kanji(
+            "瓦",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            wk_radicals,
+            kradfile=kradfile,
+        )
+        component_map = {c["char"]: c["name"] for c in profile.wk_components}
+        assert component_map["一"] == "Ground"
+        assert component_map["瓦"] is None  # not a WK radical
+
+    def test_unknown_type_gets_kradfile_decomposition(
+        self,
+        sample_phonetic_db,
+        sample_wk_radicals,
+    ):
+        """A kanji with type=unknown and empty decomposition gets KRADFILE components."""
+        kanji_db = {
+            "蓋": {
+                "type": "unknown",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": ["ガイ"],
+            },
+        }
+        kradfile = {"蓋": ["艹", "去", "皿"]}
+        profile = lookup_kanji(
+            "蓋",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            sample_wk_radicals,
+            kradfile=kradfile,
+        )
+        assert profile.keisei_type == "unknown"
+        assert profile.decomposition == ["艹", "去", "皿"]
+
+    def test_keisei_with_decomposition_not_overridden(
+        self,
+        sample_kanji_db,
+        sample_phonetic_db,
+        sample_wk_kanji_db,
+        sample_wk_radicals,
+        sample_wk_kanji_subjects,
+        sample_kradfile,
+    ):
+        """When keisei provides both type AND decomposition, KRADFILE does not override."""
+        profile = lookup_kanji(
+            "語",
+            sample_kanji_db,
+            sample_phonetic_db,
+            sample_wk_kanji_db,
+            sample_wk_radicals,
+            sample_wk_kanji_subjects,
+            sample_kradfile,
+        )
+        # kanji_db has ["言", "吾"], kradfile has ["言", "五", "口"]
+        assert profile.decomposition == ["言", "吾"]
+
+    def test_format_profile_shows_type_and_decomposition(
+        self,
+        sample_phonetic_db,
+        sample_wk_radicals,
+    ):
+        """format_profile() shows both the keisei type and KRADFILE decomposition."""
+        kanji_db = {
+            "瓦": {
+                "type": "hieroglyph",
+                "semantic": None,
+                "phonetic": None,
+                "decomposition": [],
+                "readings": ["ガ"],
+            },
+        }
+        kradfile = {"瓦": ["一", "瓦"]}
+        profile = lookup_kanji(
+            "瓦",
+            kanji_db,
+            sample_phonetic_db,
+            {},
+            sample_wk_radicals,
+            kradfile=kradfile,
+        )
+        output = format_profile(profile)
+        assert "Hieroglyph" in output
+        assert "Decomposition:" in output
+        assert "一" in output
