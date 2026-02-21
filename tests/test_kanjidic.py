@@ -109,7 +109,13 @@ ENTRY_A = _kanjidic2_entry(
             ],
         }
     ],
-    misc={"grade": 8, "strokeCounts": [7], "frequency": 1509, "variants": [], "radicalNames": []},
+    misc={
+        "grade": 8,
+        "strokeCounts": [7],
+        "frequency": 1509,
+        "variants": [],
+        "radicalNames": [],
+    },
 )
 
 # 圧 — has on'yomi アツ (katakana, multi-mora), English meaning
@@ -127,7 +133,13 @@ ENTRY_ATSU = _kanjidic2_entry(
             ],
         }
     ],
-    misc={"grade": 5, "strokeCounts": [5], "frequency": 640, "variants": [], "radicalNames": []},
+    misc={
+        "grade": 5,
+        "strokeCounts": [5],
+        "frequency": 640,
+        "variants": [],
+        "radicalNames": [],
+    },
 )
 
 # 鬱 — complex kanji with multiple on readings, no kun; no grade or frequency
