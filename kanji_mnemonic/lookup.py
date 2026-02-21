@@ -110,8 +110,8 @@ def lookup_kanji(
             if not profile.onyomi and keisei.get("readings"):
                 profile.onyomi = keisei["readings"]
 
-    # --- KRADFILE-u fallback (non-WK kanji) ---
-    if not keisei and kradfile:
+    # --- KRADFILE-u fallback (non-WK kanji or type-only keisei entries) ---
+    if kradfile and (not keisei or not profile.decomposition):
         krad_components = kradfile.get(char, [])
         if krad_components:
             profile.decomposition = krad_components
