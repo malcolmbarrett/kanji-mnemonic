@@ -15,6 +15,11 @@ kanji = "kanji_mnemonic.cli:main"
 [tool.uv]
 package = true
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: tests that hit the network (data source URL checks)",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
