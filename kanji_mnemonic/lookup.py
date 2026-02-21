@@ -293,8 +293,8 @@ def format_profile(profile: KanjiProfile) -> str:
         pf = profile.phonetic_family
         lines.append("")
         lines.append("── Phonetic Family ──")
-        ph_name = pf.get("wk_radical_name") or "(no WK name)"
-        lines.append(f"  Phonetic component: {pf['phonetic_char']} (WK: {ph_name})")
+        ph_name = pf.get("wk_radical_name") or "(no name)"
+        lines.append(f"  Phonetic component: {pf['phonetic_char']} ({ph_name})")
         lines.append(f"  Family readings: {', '.join(pf['readings'])}")
         if profile.phonetic_family_kanji_details:
             lines.append("  Other kanji in this family:")
