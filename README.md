@@ -135,7 +135,7 @@ WaniKani Components:
   Phonetic (reading hint):  化 (Change)
 
 ── Phonetic Family ──
-  Phonetic component: 化 (WK: change)
+  Phonetic component: 化 (change)
   Family readings: か, け, げ
   Other kanji in this family:
     貨 — currency (か)
