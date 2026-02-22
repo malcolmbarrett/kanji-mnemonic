@@ -807,6 +807,23 @@ class TestLookupKanjiKanjidicFallback:
 
         assert profile.joyo_grade is None
 
+    def test_missing_frequency_stays_none(self, sample_kanjidic):
+        """When kanjidic entry has no frequency, frequency_rank stays None."""
+        from kanji_mnemonic.lookup import lookup_kanji
+
+        profile = lookup_kanji(
+            "鬱",
+            {},
+            {},
+            {},
+            {},
+            None,
+            None,
+            kanjidic=sample_kanjidic,
+        )
+
+        assert profile.frequency_rank is None
+
     def test_no_kanjidic_grade_stays_none(self):
         """When kanjidic=None, joyo_grade stays None."""
         from kanji_mnemonic.lookup import lookup_kanji

@@ -260,9 +260,9 @@ def format_profile(profile: KanjiProfile) -> str:
         lines.append(f"Kun'yomi: {', '.join(profile.kunyomi)}")
     if profile.important_reading:
         lines.append(f"Important reading: {profile.important_reading}")
-    if profile.joyo_grade:
+    if profile.joyo_grade is not None:
         lines.append(f"Joyo Grade: {profile.joyo_grade}")
-    if profile.frequency_rank:
+    if profile.frequency_rank is not None:
         lines.append(f"Frequency Rank: {profile.frequency_rank}")
 
     lines.append("")
