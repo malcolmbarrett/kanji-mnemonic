@@ -638,6 +638,292 @@ class TestComponentDeduplication:
 
 
 # ---------------------------------------------------------------------------
+# TestKradfileSubsetInference
+# ---------------------------------------------------------------------------
+
+
+class TestKradfileSubsetInference:
+    """Tests for KRADFILE subset-based phonetic inference.
+
+    When a kanji's KRADFILE decomposition contains another kanji's
+    decomposition as a proper subset AND they share an on'yomi reading,
+    the subset kanji is likely the phonetic component.
+    """
+
+    def test_detects_phonetic_from_kradfile_subset(self):
+        """槌 [｜,口,辶,木] contains 追 [｜,口,辶] with shared reading つい."""
+        profile = lookup_kanji(
+            "槌",
+            {},  # empty kanji_db
+            {},  # empty phonetic_db
+            {},  # empty wk_kanji_db
+            {},  # empty wk_radicals
+            None,  # no wk_kanji_subjects
+            kradfile={
+                "槌": ["｜", "口", "辶", "木"],
+                "追": ["｜", "口", "辶"],
+            },
+            kanjidic={
+                "槌": {"meanings": ["hammer"], "onyomi": ["つい"], "kunyomi": []},
+                "追": {"meanings": ["chase"], "onyomi": ["つい"], "kunyomi": []},
+            },
+        )
+        assert profile.keisei_type == "comp_phonetic_inferred"
+        assert profile.phonetic_component == "追"
+        assert profile.semantic_component == "木"
+
+    def test_no_inference_without_reading_overlap(self):
+        """Subset exists but readings don't overlap — no inference."""
+        profile = lookup_kanji(
+            "槌",
+            {},
+            {},
+            {},
+            {},
+            None,
+            kradfile={
+                "槌": ["｜", "口", "辶", "木"],
+                "追": ["｜", "口", "辶"],
+            },
+            kanjidic={
+                "槌": {"meanings": ["hammer"], "onyomi": ["つい"], "kunyomi": []},
+                "追": {"meanings": ["chase"], "onyomi": ["たい"], "kunyomi": []},
+            },
+        )
+        assert profile.keisei_type is None
+        assert profile.phonetic_component is None
+
+    def test_prefers_largest_subset(self):
+        """When multiple candidates match, pick the one with most components."""
+        profile = lookup_kanji(
+            "X",
+            {},
+            {},
+            {},
+            {},
+            None,
+            kradfile={
+                "X": ["a", "b", "c", "d"],
+                "Y": ["a", "b", "c"],  # 3 components — should win
+                "Z": ["a", "b"],  # 2 components
+            },
+            kanjidic={
+                "X": {"meanings": ["target"], "onyomi": ["か"], "kunyomi": []},
+                "Y": {"meanings": ["bigger"], "onyomi": ["か"], "kunyomi": []},
+                "Z": {"meanings": ["smaller"], "onyomi": ["か"], "kunyomi": []},
+            },
+        )
+        assert profile.phonetic_component == "Y"
+
+    def test_single_atom_subset_ignored(self):
+        """Single-atom subsets should not trigger inference."""
+        profile = lookup_kanji(
+            "X",
+            {},
+            {},
+            {},
+            {},
+            None,
+            kradfile={
+                "X": ["a", "b"],
+                "Y": ["a"],  # single atom — should be ignored
+            },
+            kanjidic={
+                "X": {"meanings": ["target"], "onyomi": ["か"], "kunyomi": []},
+                "Y": {"meanings": ["single"], "onyomi": ["か"], "kunyomi": []},
+            },
+        )
+        assert profile.keisei_type is None
+
+    def test_no_inference_without_onyomi(self):
+        """Target kanji has no onyomi — no inference possible."""
+        profile = lookup_kanji(
+            "X",
+            {},
+            {},
+            {},
+            {},
+            None,
+            kradfile={
+                "X": ["a", "b", "c"],
+                "Y": ["a", "b"],
+            },
+            kanjidic={
+                "X": {"meanings": ["target"], "onyomi": [], "kunyomi": ["くん"]},
+                "Y": {"meanings": ["cand"], "onyomi": ["か"], "kunyomi": []},
+            },
+        )
+        assert profile.keisei_type is None
+
+    def test_replaces_atoms_with_wk_subject_radicals(self):
+        """After inference, KRADFILE atoms are replaced with WK subject radicals."""
+        profile = lookup_kanji(
+            "槌",
+            {},
+            {},
+            {},
+            {
+                "⻌": {"name": "Scooter", "level": 5, "slug": "scooter"},
+                "㠯": {"name": "Bear", "level": 11, "slug": "bear"},
+                "丶": {"name": "Drop", "level": 1, "slug": "drop"},
+                "木": {"name": "Tree", "level": 2, "slug": "tree"},
+            },
+            wk_kanji_subjects={
+                "追": {
+                    "meanings": ["Chase"],
+                    "readings": {"onyomi": ["つい"], "kunyomi": []},
+                    "component_radicals": ["⻌", "㠯", "丶"],
+                    "level": 11,
+                },
+            },
+            kradfile={
+                "槌": ["｜", "口", "辶", "木"],
+                "追": ["｜", "口", "辶"],
+            },
+            kanjidic={
+                "槌": {"meanings": ["hammer"], "onyomi": ["つい"], "kunyomi": []},
+                "追": {"meanings": ["chase"], "onyomi": ["つい"], "kunyomi": []},
+            },
+        )
+        component_map = {c["char"]: c["name"] for c in profile.wk_components}
+        assert "木" in component_map
+        assert component_map["木"] == "Tree"
+        assert "⻌" in component_map
+        assert component_map["⻌"] == "Scooter"
+        assert "㠯" in component_map
+        assert component_map["㠯"] == "Bear"
+        # Raw KRADFILE atoms should be gone
+        assert "｜" not in component_map
+        assert "辶" not in component_map
+
+    def test_no_wk_subject_uses_kanji_meaning(self):
+        """When phonetic component has no WK subject, use its meaning as name."""
+        profile = lookup_kanji(
+            "X",
+            {},
+            {},
+            {},
+            {},
+            None,  # no wk_kanji_subjects
+            kradfile={
+                "X": ["a", "b", "c"],
+                "Y": ["a", "b"],
+            },
+            kanjidic={
+                "X": {"meanings": ["target"], "onyomi": ["か"], "kunyomi": []},
+                "Y": {"meanings": ["source"], "onyomi": ["か"], "kunyomi": []},
+            },
+        )
+        component_map = {c["char"]: c["name"] for c in profile.wk_components}
+        # Y should appear with its kanjidic meaning
+        assert "Y" in component_map
+        assert component_map["Y"] == "source"
+
+    def test_builds_synthetic_phonetic_family(self):
+        """Synthetic family includes other kanji sharing the phonetic subset."""
+        profile = lookup_kanji(
+            "槌",
+            {},
+            {},
+            {},
+            {},
+            None,
+            kradfile={
+                "槌": ["｜", "口", "辶", "木"],
+                "追": ["｜", "口", "辶"],
+                "椎": ["｜", "口", "辶", "木"],  # also contains 追's components
+            },
+            kanjidic={
+                "槌": {"meanings": ["hammer"], "onyomi": ["つい"], "kunyomi": []},
+                "追": {"meanings": ["chase"], "onyomi": ["つい"], "kunyomi": []},
+                "椎": {
+                    "meanings": ["chinquapin"],
+                    "onyomi": ["つい"],
+                    "kunyomi": [],
+                },
+            },
+        )
+        assert profile.phonetic_family is not None
+        assert profile.phonetic_family["phonetic_char"] == "追"
+        # 椎 should be in the synthetic family
+        family_chars = [e["char"] for e in profile.phonetic_family_kanji_details]
+        assert "椎" in family_chars
+
+    def test_phonetic_db_inference_takes_priority(self, sample_phonetic_db):
+        """When a KRADFILE atom is directly in phonetic_db, it wins over subset."""
+        # 吾 is in phonetic_db AND is a direct KRADFILE atom of 語
+        profile = lookup_kanji(
+            "語",
+            {},
+            sample_phonetic_db,
+            {},
+            {},
+            None,
+            kradfile={
+                "語": ["言", "吾"],  # 吾 is a direct atom AND in phonetic_db
+            },
+            kanjidic={
+                "語": {"meanings": ["language"], "onyomi": ["ご"], "kunyomi": []},
+            },
+        )
+        # Should use phonetic_db direct match (comp_phonetic)
+        assert profile.keisei_type == "comp_phonetic"
+        assert profile.phonetic_component == "吾"
+
+    def test_detects_phonetic_from_kunyomi(self):
+        """褄 [｜,ヨ,一,衤,女] contains 妻 [｜,ヨ,一,女] with shared kun'yomi つま."""
+        profile = lookup_kanji(
+            "褄",
+            {},
+            {},
+            {},
+            {},
+            None,
+            kradfile={
+                "褄": ["｜", "ヨ", "一", "衤", "女"],
+                "妻": ["｜", "ヨ", "一", "女"],
+            },
+            kanjidic={
+                "褄": {
+                    "meanings": ["skirt"],
+                    "onyomi": [],
+                    "kunyomi": ["つま"],
+                },
+                "妻": {
+                    "meanings": ["wife"],
+                    "onyomi": ["さい"],
+                    "kunyomi": ["つま"],
+                },
+            },
+        )
+        assert profile.keisei_type == "comp_phonetic_inferred"
+        assert profile.phonetic_component == "妻"
+        assert profile.semantic_component == "衤"
+
+    def test_phonetic_name_in_format_profile(self):
+        """format_profile shows the phonetic component's meaning in breakdown."""
+        profile = lookup_kanji(
+            "槌",
+            {},
+            {},
+            {},
+            {"木": {"name": "Tree", "level": 2, "slug": "tree"}},
+            None,
+            kradfile={
+                "槌": ["｜", "口", "辶", "木"],
+                "追": ["｜", "口", "辶"],
+            },
+            kanjidic={
+                "槌": {"meanings": ["hammer"], "onyomi": ["つい"], "kunyomi": []},
+                "追": {"meanings": ["chase"], "onyomi": ["つい"], "kunyomi": []},
+            },
+        )
+        output = format_profile(profile)
+        assert "Phonetic (reading hint):  追 (chase)" in output
+        assert "Semantic (meaning hint): 木 (Tree)" in output
+
+
+# ---------------------------------------------------------------------------
 # TestFormatProfile
 # ---------------------------------------------------------------------------
 

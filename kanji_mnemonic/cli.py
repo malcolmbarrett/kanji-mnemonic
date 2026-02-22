@@ -114,6 +114,7 @@ def cmd_lookup(
             kradfile,
             kanjidic,
             personal_radicals=personal_radicals,
+            infer_phonetic=not getattr(args, "no_infer", False),
         )
         print(format_profile(profile))
         print()
@@ -176,6 +177,7 @@ def cmd_memorize(
             kradfile,
             kanjidic,
             personal_radicals=personal_radicals,
+            infer_phonetic=not getattr(args, "no_infer", False),
         )
 
         # Show the profile first
@@ -238,6 +240,7 @@ def cmd_prompt(
             kradfile,
             kanjidic,
             personal_radicals=personal_radicals,
+            infer_phonetic=not getattr(args, "no_infer", False),
         )
         print("── SYSTEM PROMPT ──")
         print(get_system_prompt())
@@ -313,12 +316,24 @@ def main():
         default=False,
         help="Save mnemonic without interactive prompt",
     )
+    p_memorize.add_argument(
+        "--no-infer",
+        action="store_true",
+        default=False,
+        help="Disable KRADFILE-based phonetic inference",
+    )
 
     # --- lookup ---
     p_lookup = subparsers.add_parser(
         "lookup", aliases=["l"], help="Show kanji profile without LLM call"
     )
     p_lookup.add_argument("kanji", nargs="+", help="One or more kanji characters")
+    p_lookup.add_argument(
+        "--no-infer",
+        action="store_true",
+        default=False,
+        help="Disable KRADFILE-based phonetic inference",
+    )
 
     # --- prompt ---
     p_prompt = subparsers.add_parser(
@@ -326,6 +341,12 @@ def main():
     )
     p_prompt.add_argument("kanji", nargs="+", help="One or more kanji characters")
     p_prompt.add_argument("-c", "--context", help="Extra context to include")
+    p_prompt.add_argument(
+        "--no-infer",
+        action="store_true",
+        default=False,
+        help="Disable KRADFILE-based phonetic inference",
+    )
 
     # --- name ---
     p_name = subparsers.add_parser("name", help="Add or update a personal radical name")
