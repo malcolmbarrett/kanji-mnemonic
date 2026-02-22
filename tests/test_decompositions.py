@@ -1,7 +1,6 @@
 """Tests for personal kanji decomposition feature (bd-8y4).
 
-These tests define the API contract for the `kanji decompose` command.
-They are expected to fail until the feature is implemented (TDD).
+These tests define and verify the API contract for the `kanji decompose` command.
 """
 
 import argparse
@@ -44,18 +43,6 @@ def decompositions_file(config_dir):
         json.dumps(data, ensure_ascii=False), encoding="utf-8"
     )
     return config_dir / "decompositions.json"
-
-
-@pytest.fixture
-def sample_personal_decompositions():
-    """Sample personal decompositions dict (as returned by load_personal_decompositions)."""
-    return {
-        "語": {
-            "parts": ["言", "吾"],
-            "phonetic": "吾",
-            "semantic": "言",
-        },
-    }
 
 
 # ---------------------------------------------------------------------------

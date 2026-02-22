@@ -343,18 +343,14 @@ def cmd_decompose(
             )
             sys.exit(1)
 
-    # Merge -p/-s into parts list: semantic first, phonetic last
-    if semantic and semantic not in resolved_parts:
+    # Merge -p/-s into parts list and enforce ordering: semantic first, phonetic last
+    if semantic:
+        if semantic in resolved_parts:
+            resolved_parts.remove(semantic)
         resolved_parts.insert(0, semantic)
-    if phonetic and phonetic not in resolved_parts:
-        resolved_parts.append(phonetic)
-
-    # Ensure semantic is first and phonetic is last in ordering
-    if semantic and semantic in resolved_parts and resolved_parts[0] != semantic:
-        resolved_parts.remove(semantic)
-        resolved_parts.insert(0, semantic)
-    if phonetic and phonetic in resolved_parts and resolved_parts[-1] != phonetic:
-        resolved_parts.remove(phonetic)
+    if phonetic:
+        if phonetic in resolved_parts:
+            resolved_parts.remove(phonetic)
         resolved_parts.append(phonetic)
 
     # Save
