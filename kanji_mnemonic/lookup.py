@@ -212,9 +212,7 @@ def lookup_kanji(
                 if kd.get("onyomi"):
                     phonetic_readings.extend(kd["onyomi"])
                 if kd.get("kunyomi"):
-                    phonetic_readings.extend(
-                        _kun_stem(r) for r in kd["kunyomi"]
-                    )
+                    phonetic_readings.extend(_kun_stem(r) for r in kd["kunyomi"])
 
         # Get the phonetic component's meaning for display
         phonetic_name = rad_info["name"] if rad_info else None
