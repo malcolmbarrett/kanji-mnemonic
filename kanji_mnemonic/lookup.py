@@ -199,7 +199,9 @@ def lookup_kanji(
             if wk_entry:
                 if wk_entry.get("onyomi"):
                     phonetic_readings.extend(
-                        r.strip() for r in wk_entry["onyomi"].split(",") if r.strip()
+                        _katakana_to_hiragana(r.strip())
+                        for r in wk_entry["onyomi"].split(",")
+                        if r.strip()
                     )
                 if wk_entry.get("kunyomi"):
                     phonetic_readings.extend(
