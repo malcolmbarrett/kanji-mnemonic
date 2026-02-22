@@ -260,7 +260,7 @@ class TestPersonalRadicalsInPhoneticFamily:
         assert "Tongue Radical" in output
         assert "(WK:" not in output
 
-    def test_phonetic_family_without_personal_radical_still_shows_no_name(
+    def test_phonetic_family_without_personal_radical_uses_wk_fallback(
         self,
         sample_kanji_db,
         sample_phonetic_db,
@@ -269,7 +269,7 @@ class TestPersonalRadicalsInPhoneticFamily:
         sample_wk_kanji_subjects,
         sample_kradfile,
     ):
-        """Without a personal radical for the phonetic component, '(no name)' is shown."""
+        """Without a personal radical, phonetic component name falls back to WK data."""
         from kanji_mnemonic.lookup import format_profile, lookup_kanji
 
         profile = lookup_kanji(
@@ -283,7 +283,8 @@ class TestPersonalRadicalsInPhoneticFamily:
             personal_radicals={},
         )
         output = format_profile(profile)
-        assert "(no name)" in output
+        # 舌 has wk-radical=null in phonetic_db but is in wk_radicals as "Tongue"
+        assert "Tongue" in output
 
     def test_phonetic_family_personal_overrides_existing_wk_name(
         self,
