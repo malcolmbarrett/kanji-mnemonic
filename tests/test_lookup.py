@@ -35,6 +35,8 @@ class TestKanjiProfileDefaults:
         assert profile.wk_components == []
         assert profile.phonetic_family is None
         assert profile.phonetic_family_kanji_details == []
+        assert profile.joyo_grade is None
+        assert profile.frequency_rank is None
 
 
 # ---------------------------------------------------------------------------
@@ -727,6 +729,30 @@ class TestFormatProfile:
         output = format_profile(profile)
         assert "kanji name 世" in output
         assert "世" in output
+
+    def test_joyo_grade_displayed(self):
+        """Joyo grade appears in output when set."""
+        profile = KanjiProfile(character="圧", joyo_grade=5)
+        output = format_profile(profile)
+        assert "Joyo Grade: 5" in output
+
+    def test_frequency_rank_displayed(self):
+        """Frequency rank appears in output when set."""
+        profile = KanjiProfile(character="圧", frequency_rank=640)
+        output = format_profile(profile)
+        assert "Frequency Rank: 640" in output
+
+    def test_no_grade_no_line(self):
+        """No Joyo Grade line when joyo_grade is None."""
+        profile = KanjiProfile(character="鬱")
+        output = format_profile(profile)
+        assert "Joyo Grade" not in output
+
+    def test_no_frequency_no_line(self):
+        """No Frequency Rank line when frequency_rank is None."""
+        profile = KanjiProfile(character="鬱")
+        output = format_profile(profile)
+        assert "Frequency Rank" not in output
 
 
 # ---------------------------------------------------------------------------

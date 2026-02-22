@@ -28,6 +28,9 @@ class KanjiProfile:
     # Phonetic family info
     phonetic_family: dict | None = None  # from phonetic_db
     phonetic_family_kanji_details: list[dict] = field(default_factory=list)
+    # From kanjidic2 (jmdict-simplified)
+    joyo_grade: int | None = None
+    frequency_rank: int | None = None
 
 
 def lookup_kanji(
@@ -90,6 +93,10 @@ def lookup_kanji(
                 profile.onyomi = kd["onyomi"]
             if not profile.kunyomi and kd.get("kunyomi"):
                 profile.kunyomi = kd["kunyomi"]
+            if kd.get("grade") is not None:
+                profile.joyo_grade = kd["grade"]
+            if kd.get("frequency") is not None:
+                profile.frequency_rank = kd["frequency"]
 
     # Track which component chars we've already added to wk_components
     existing_chars = {c["char"] for c in profile.wk_components}
@@ -253,6 +260,10 @@ def format_profile(profile: KanjiProfile) -> str:
         lines.append(f"Kun'yomi: {', '.join(profile.kunyomi)}")
     if profile.important_reading:
         lines.append(f"Important reading: {profile.important_reading}")
+    if profile.joyo_grade is not None:
+        lines.append(f"Joyo Grade: {profile.joyo_grade}")
+    if profile.frequency_rank is not None:
+        lines.append(f"Frequency Rank: {profile.frequency_rank}")
 
     lines.append("")
 

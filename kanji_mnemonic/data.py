@@ -211,12 +211,13 @@ def _katakana_to_hiragana(text: str) -> str:
 
 
 def _parse_kanjidic(raw: dict) -> dict:
-    """Parse raw kanjidic2 JSON into {char: {meanings, onyomi, kunyomi}}.
+    """Parse raw kanjidic2 JSON into {char: {meanings, onyomi, kunyomi, grade, frequency}}.
 
     - ja_on readings are converted from katakana to hiragana
     - Only English meanings are kept
     - Characters with no readingMeaning are skipped
     - Multiple readingMeaning groups are merged
+    - grade and frequency are extracted from the misc section (None if absent)
     """
     result = {}
     for entry in raw.get("characters", []):
@@ -238,10 +239,13 @@ def _parse_kanjidic(raw: dict) -> dict:
                 if m.get("lang", "en") == "en":
                     meanings.append(m["value"])
 
+        misc = entry.get("misc", {})
         result[literal] = {
             "meanings": meanings,
             "onyomi": onyomi,
             "kunyomi": kunyomi,
+            "grade": misc.get("grade"),
+            "frequency": misc.get("frequency"),
         }
     return result
 
