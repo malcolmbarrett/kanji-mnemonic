@@ -152,6 +152,18 @@ def sample_kradfile():
 
 
 @pytest.fixture
+def sample_personal_decompositions():
+    """Sample personal decompositions dict (as returned by load_personal_decompositions)."""
+    return {
+        "語": {
+            "parts": ["言", "吾"],
+            "phonetic": "吾",
+            "semantic": "言",
+        },
+    }
+
+
+@pytest.fixture
 def sample_profile_phonetic(
     sample_kanji_db,
     sample_phonetic_db,

@@ -245,6 +245,7 @@ class TestInteractiveAccept:
             sample_kradfile,
             None,
             {},
+            {},
         )
 
         saved = load_mnemonics()
@@ -284,6 +285,7 @@ class TestInteractiveAccept:
             sample_wk_kanji_subjects,
             sample_kradfile,
             None,
+            {},
             {},
         )
 
@@ -336,6 +338,7 @@ class TestInteractiveRetry:
             sample_kradfile,
             None,
             {},
+            {},
         )
 
         assert mock_client.messages.stream.call_count == 2
@@ -377,6 +380,7 @@ class TestInteractiveRetry:
             sample_wk_kanji_subjects,
             sample_kradfile,
             None,
+            {},
             {},
         )
 
@@ -434,6 +438,7 @@ class TestInteractiveEdit:
             sample_kradfile,
             None,
             {},
+            {},
         )
 
         saved = load_mnemonics()
@@ -484,6 +489,7 @@ class TestInteractiveEdit:
             sample_kradfile,
             None,
             {},
+            {},
         )
 
         assert captured_cmd[0] == "vi"
@@ -529,6 +535,7 @@ class TestInteractiveEdit:
             sample_wk_kanji_subjects,
             sample_kradfile,
             None,
+            {},
             {},
         )
 
@@ -578,6 +585,7 @@ class TestInteractiveQuit:
             sample_kradfile,
             None,
             {},
+            {},
         )
 
         saved = load_mnemonics()
@@ -617,6 +625,7 @@ class TestInteractiveQuit:
             sample_wk_kanji_subjects,
             sample_kradfile,
             None,
+            {},
             {},
         )
 
@@ -667,6 +676,7 @@ class TestNoInteractive:
             sample_kradfile,
             None,
             {},
+            {},
         )
 
         mock_input.assert_not_called()
@@ -707,6 +717,7 @@ class TestNoInteractive:
             sample_kradfile,
             None,
             {},
+            {},
         )
 
         output = capsys.readouterr().out
@@ -716,7 +727,7 @@ class TestNoInteractive:
         """'kanji memorize -n' and '--no-interactive' set args.no_interactive=True."""
         from kanji_mnemonic.cli import main
 
-        mock_data = ({}, {}, {}, {}, {}, {}, {}, {})
+        mock_data = ({}, {}, {}, {}, {}, {}, {}, {}, {})
         monkeypatch.setattr("kanji_mnemonic.cli.get_wk_api_key", lambda: None)
         monkeypatch.setattr("kanji_mnemonic.cli.load_all_data", lambda key: mock_data)
 
@@ -784,7 +795,7 @@ class TestShowCommandDispatch:
     """Tests for main() routing to show command."""
 
     def _setup_mocks(self, monkeypatch):
-        mock_data = ({}, {}, {}, {}, {}, {}, {}, {})
+        mock_data = ({}, {}, {}, {}, {}, {}, {}, {}, {})
         monkeypatch.setattr("kanji_mnemonic.cli.get_wk_api_key", lambda: None)
         monkeypatch.setattr("kanji_mnemonic.cli.load_all_data", lambda key: mock_data)
 
@@ -878,5 +889,6 @@ class TestAutoSaveTiming:
             sample_wk_kanji_subjects,
             sample_kradfile,
             None,
+            {},
             {},
         )
