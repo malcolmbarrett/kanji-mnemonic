@@ -326,6 +326,57 @@ def save_personal_radical(char: str, name: str) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
 
+def load_personal_decompositions() -> dict:
+    """Load the user's personal kanji decompositions.
+
+    Returns {kanji: {"parts": [...], "phonetic": str|None, "semantic": str|None}},
+    or empty dict if the file doesn't exist.
+    """
+    path = CONFIG_DIR / "decompositions.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save_personal_decomposition(
+    kanji: str,
+    parts: list[str],
+    phonetic: str | None = None,
+    semantic: str | None = None,
+) -> None:
+    """Save or update a personal kanji decomposition.
+
+    Creates the config directory and file if they don't exist.
+    """
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    path = CONFIG_DIR / "decompositions.json"
+    data = {}
+    if path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+    data[kanji] = {
+        "parts": parts,
+        "phonetic": phonetic,
+        "semantic": semantic,
+    }
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+
+def remove_personal_decomposition(kanji: str) -> bool:
+    """Remove a personal decomposition for a kanji.
+
+    Returns True if an entry was removed, False if not found.
+    """
+    path = CONFIG_DIR / "decompositions.json"
+    if not path.exists():
+        return False
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if kanji not in data:
+        return False
+    del data[kanji]
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return True
+
+
 def load_mnemonics() -> dict:
     """Load the user's saved mnemonics dictionary.
 

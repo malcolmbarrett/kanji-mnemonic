@@ -18,13 +18,16 @@ from .data import (
     load_kanjidic,
     load_kradfile,
     load_mnemonic_for_kanji,
+    load_personal_decompositions,
     load_personal_radicals,
     load_phonetic_db,
     load_wk_kanji_db,
+    remove_personal_decomposition,
     save_mnemonic,
+    save_personal_decomposition,
     save_personal_radical,
 )
-from .lookup import format_profile, lookup_kanji
+from .lookup import format_profile, lookup_kanji, reverse_lookup_radical
 from .prompt import build_prompt, get_system_prompt
 
 # Load .env — checks cwd first, then home directory
@@ -78,6 +81,7 @@ def load_all_data(wk_api_key: str | None):
             )
 
     personal_radicals = load_personal_radicals()
+    personal_decompositions = load_personal_decompositions()
 
     return (
         kanji_db,
@@ -88,6 +92,7 @@ def load_all_data(wk_api_key: str | None):
         kradfile,
         kanjidic,
         personal_radicals,
+        personal_decompositions,
     )
 
 
@@ -101,6 +106,7 @@ def cmd_lookup(
     kradfile,
     kanjidic,
     personal_radicals,
+    personal_decompositions,
 ):
     """Just show the kanji profile without generating a mnemonic."""
     for char in args.kanji:
@@ -115,8 +121,14 @@ def cmd_lookup(
             kanjidic,
             personal_radicals=personal_radicals,
             infer_phonetic=not getattr(args, "no_infer", False),
+            personal_decompositions=personal_decompositions,
         )
-        print(format_profile(profile))
+        print(
+            format_profile(
+                profile,
+                show_all_decomp=getattr(args, "all_decomp", False),
+            )
+        )
         print()
 
 
@@ -162,6 +174,7 @@ def cmd_memorize(
     kradfile,
     kanjidic,
     personal_radicals,
+    personal_decompositions,
 ):
     """Generate a mnemonic for the given kanji."""
     client = get_anthropic_client()
@@ -178,6 +191,7 @@ def cmd_memorize(
             kanjidic,
             personal_radicals=personal_radicals,
             infer_phonetic=not getattr(args, "no_infer", False),
+            personal_decompositions=personal_decompositions,
         )
 
         # Show the profile first
@@ -227,6 +241,7 @@ def cmd_prompt(
     kradfile,
     kanjidic,
     personal_radicals,
+    personal_decompositions,
 ):
     """Show the assembled prompt without calling the LLM."""
     for char in args.kanji:
@@ -241,6 +256,7 @@ def cmd_prompt(
             kanjidic,
             personal_radicals=personal_radicals,
             infer_phonetic=not getattr(args, "no_infer", False),
+            personal_decompositions=personal_decompositions,
         )
         print("── SYSTEM PROMPT ──")
         print(get_system_prompt())
@@ -248,6 +264,137 @@ def cmd_prompt(
         print("── USER MESSAGE ──")
         print(build_prompt(profile, user_context=args.context))
         print()
+
+
+def cmd_decompose(
+    args,
+    kanji_db,
+    phonetic_db,
+    wk_kanji_db,
+    wk_radicals,
+    wk_kanji_subjects,
+    kradfile,
+    kanjidic,
+    personal_radicals,
+    personal_decompositions,
+):
+    """Set, show, or remove a personal kanji decomposition."""
+    char = args.kanji
+
+    # --- Remove mode ---
+    if args.remove:
+        removed = remove_personal_decomposition(char)
+        if removed:
+            print(f"Removed personal decomposition for {char}")
+        else:
+            print(f"No personal decomposition saved for {char}")
+        return
+
+    # --- Show mode (no parts, no -p/-s) ---
+    if not args.parts and not args.phonetic and not args.semantic:
+        pd = personal_decompositions.get(char)
+        if not pd:
+            print(f"No personal decomposition saved for {char}")
+            return
+        parts_display = []
+        for p in pd["parts"]:
+            label = p
+            if p == pd.get("semantic"):
+                label += " (semantic)"
+            elif p == pd.get("phonetic"):
+                label += " (phonetic)"
+            parts_display.append(label)
+        print(f"{char} → {', '.join(parts_display)}")
+        return
+
+    # --- Resolve parts ---
+    resolved_parts = []
+    for part in args.parts:
+        resolved = _resolve_part(part, wk_radicals, personal_radicals)
+        if resolved is None:
+            print(
+                f'Error: "{part}" is not a known radical name. '
+                f"Use 'kanji name <radical> {part}' to add it first.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        resolved_parts.append(resolved)
+
+    # Resolve -p and -s values
+    phonetic = None
+    if args.phonetic:
+        phonetic = _resolve_part(args.phonetic, wk_radicals, personal_radicals)
+        if phonetic is None:
+            print(
+                f'Error: "{args.phonetic}" is not a known radical name. '
+                f"Use 'kanji name <radical> {args.phonetic}' to add it first.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+    semantic = None
+    if args.semantic:
+        semantic = _resolve_part(args.semantic, wk_radicals, personal_radicals)
+        if semantic is None:
+            print(
+                f'Error: "{args.semantic}" is not a known radical name. '
+                f"Use 'kanji name <radical> {args.semantic}' to add it first.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+    # Merge -p/-s into parts list and enforce ordering: semantic first, phonetic last
+    if semantic:
+        if semantic in resolved_parts:
+            resolved_parts.remove(semantic)
+        resolved_parts.insert(0, semantic)
+    if phonetic:
+        if phonetic in resolved_parts:
+            resolved_parts.remove(phonetic)
+        resolved_parts.append(phonetic)
+
+    # Save
+    save_personal_decomposition(
+        char, resolved_parts, phonetic=phonetic, semantic=semantic
+    )
+
+    # Print confirmation with resolved names
+    parts_display = []
+    for p in resolved_parts:
+        name = _resolve_name(p, wk_radicals, personal_radicals, wk_kanji_db, kanjidic)
+        label = f"{p}"
+        if name:
+            label += f" ({name})"
+        if p == semantic:
+            label += " [semantic]"
+        elif p == phonetic:
+            label += " [phonetic]"
+        parts_display.append(label)
+    print(f"Saved: {char} → {', '.join(parts_display)}")
+
+
+def _resolve_part(part, wk_radicals, personal_radicals):
+    """Resolve a part string to a character. Single chars pass through; words are reverse-looked-up."""
+    if len(part) == 1:
+        return part
+    return reverse_lookup_radical(part, wk_radicals, personal_radicals)
+
+
+def _resolve_name(char, wk_radicals, personal_radicals, wk_kanji_db, kanjidic):
+    """Get the display name for a component character."""
+    if personal_radicals and char in personal_radicals:
+        return personal_radicals[char]
+    rad_info = wk_radicals.get(char)
+    if rad_info:
+        return rad_info["name"]
+    wk_entry = wk_kanji_db.get(char)
+    if wk_entry:
+        return wk_entry.get("meaning")
+    if kanjidic:
+        kd = kanjidic.get(char, {})
+        if kd.get("meanings"):
+            return kd["meanings"][0]
+    return None
 
 
 def cmd_name(args):
@@ -334,6 +481,12 @@ def main():
         default=False,
         help="Disable KRADFILE-based phonetic inference",
     )
+    p_lookup.add_argument(
+        "--all-decomp",
+        action="store_true",
+        default=False,
+        help="Show both personal and auto-detected decompositions",
+    )
 
     # --- prompt ---
     p_prompt = subparsers.add_parser(
@@ -346,6 +499,32 @@ def main():
         action="store_true",
         default=False,
         help="Disable KRADFILE-based phonetic inference",
+    )
+
+    # --- decompose ---
+    p_decompose = subparsers.add_parser(
+        "decompose",
+        aliases=["d"],
+        help="Set, show, or remove a personal kanji decomposition",
+    )
+    p_decompose.add_argument("kanji", help="A single kanji character")
+    p_decompose.add_argument(
+        "parts",
+        nargs="*",
+        help="Component parts (kanji characters or radical names)",
+    )
+    p_decompose.add_argument(
+        "-p", "--phonetic", help="Mark a component as the phonetic component"
+    )
+    p_decompose.add_argument(
+        "-s", "--semantic", help="Mark a component as the semantic component"
+    )
+    p_decompose.add_argument(
+        "--remove",
+        "--rm",
+        action="store_true",
+        default=False,
+        help="Remove the personal decomposition for this kanji",
     )
 
     # --- name ---
@@ -398,6 +577,8 @@ def main():
         "l": cmd_lookup,
         "prompt": cmd_prompt,
         "p": cmd_prompt,
+        "decompose": cmd_decompose,
+        "d": cmd_decompose,
     }
     dispatch[args.command](args, *data)
 

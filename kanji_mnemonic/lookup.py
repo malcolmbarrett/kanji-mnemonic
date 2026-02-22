@@ -5,6 +5,31 @@ from dataclasses import dataclass, field
 from .data import _katakana_to_hiragana
 
 
+def reverse_lookup_radical(
+    name: str,
+    wk_radicals: dict,
+    personal_radicals: dict,
+) -> str | None:
+    """Look up a radical character by its name (case-insensitive).
+
+    Checks personal radicals first, then WK radicals.
+    Returns the character, or None if not found.
+    """
+    name_lower = name.lower()
+
+    # Personal radicals first (higher priority)
+    for char, rad_name in personal_radicals.items():
+        if rad_name.lower() == name_lower:
+            return char
+
+    # WK radicals
+    for char, info in wk_radicals.items():
+        if info["name"].lower() == name_lower:
+            return char
+
+    return None
+
+
 @dataclass
 class KanjiProfile:
     character: str
@@ -31,6 +56,14 @@ class KanjiProfile:
     # From kanjidic2 (jmdict-simplified)
     joyo_grade: int | None = None
     frequency_rank: int | None = None
+    # Personal decomposition
+    personal_decomposition: dict | None = None  # raw stored dict
+    decomposition_source: str | None = None  # "personal", "keisei", or "kradfile"
+    auto_decomposition: list[str] = field(default_factory=list)
+    auto_wk_components: list[dict] = field(default_factory=list)
+    auto_keisei_type: str | None = None
+    auto_semantic_component: str | None = None
+    auto_phonetic_component: str | None = None
 
 
 def lookup_kanji(
@@ -44,6 +77,7 @@ def lookup_kanji(
     kanjidic: dict | None = None,
     personal_radicals: dict | None = None,
     infer_phonetic: bool = True,
+    personal_decompositions: dict | None = None,
 ) -> KanjiProfile:
     profile = KanjiProfile(character=char)
 
@@ -113,6 +147,7 @@ def lookup_kanji(
             profile.semantic_component = keisei.get("semantic")
             profile.phonetic_component = keisei.get("phonetic")
             profile.decomposition = keisei.get("decomposition", [])
+            profile.decomposition_source = "keisei"
 
             # If readings weren't found in WK data, use Keisei readings
             if not profile.onyomi and keisei.get("readings"):
@@ -123,6 +158,8 @@ def lookup_kanji(
         krad_components = kradfile.get(char, [])
         if krad_components:
             profile.decomposition = krad_components
+            if not profile.decomposition_source:
+                profile.decomposition_source = "kradfile"
             # Resolve component names from WK radicals
             for comp_char in krad_components:
                 if comp_char not in existing_chars:
@@ -320,6 +357,97 @@ def lookup_kanji(
             name = rad_info["name"] if rad_info else None
             profile.wk_components.append({"char": comp_char, "name": name})
             existing_chars.add(comp_char)
+
+    # --- Apply personal decomposition override ---
+    if personal_decompositions and char in personal_decompositions:
+        pd = personal_decompositions[char]
+        # Stash auto-detected values
+        profile.auto_decomposition = list(profile.decomposition)
+        profile.auto_wk_components = list(profile.wk_components)
+        profile.auto_keisei_type = profile.keisei_type
+        profile.auto_semantic_component = profile.semantic_component
+        profile.auto_phonetic_component = profile.phonetic_component
+
+        # Store raw personal decomposition and update source
+        profile.personal_decomposition = pd
+        profile.decomposition_source = "personal"
+
+        # Override decomposition
+        profile.decomposition = pd["parts"]
+        parts_set = set(pd["parts"])
+
+        # Inherit auto-detected PS components if not explicitly set
+        # and if the auto component is in the personal parts list
+        personal_semantic = pd.get("semantic")
+        personal_phonetic = pd.get("phonetic")
+
+        if personal_semantic is None and profile.auto_semantic_component in parts_set:
+            personal_semantic = profile.auto_semantic_component
+        if personal_phonetic is None and profile.auto_phonetic_component in parts_set:
+            personal_phonetic = profile.auto_phonetic_component
+
+        profile.semantic_component = personal_semantic
+        profile.phonetic_component = personal_phonetic
+
+        # Set keisei_type based on resolved PS components
+        if personal_phonetic and personal_semantic:
+            profile.keisei_type = "comp_phonetic"
+        elif personal_phonetic or personal_semantic:
+            # Partial — keep whatever was auto-detected
+            pass
+        else:
+            profile.keisei_type = profile.auto_keisei_type
+
+        # Rebuild wk_components from personal parts
+        profile.wk_components = []
+        for part_char in pd["parts"]:
+            rad_info = wk_radicals.get(part_char)
+            name = rad_info["name"] if rad_info else None
+            if not name:
+                ph_entry = phonetic_db.get(part_char, {})
+                if ph_entry.get("wk-radical"):
+                    name = ph_entry["wk-radical"]
+            if not name:
+                wk_entry = wk_kanji_db.get(part_char)
+                if wk_entry:
+                    name = wk_entry.get("meaning")
+            if not name and kanjidic:
+                kd = kanjidic.get(part_char, {})
+                if kd.get("meanings"):
+                    name = kd["meanings"][0]
+            profile.wk_components.append({"char": part_char, "name": name})
+
+        # Rebuild phonetic family if phonetic component changed
+        new_phonetic = personal_phonetic
+        if new_phonetic and new_phonetic != profile.auto_phonetic_component:
+            if new_phonetic in phonetic_db:
+                ph = phonetic_db[new_phonetic]
+                ph_display_name = ph.get("wk-radical")
+                if not ph_display_name:
+                    ri = wk_radicals.get(new_phonetic)
+                    if ri:
+                        ph_display_name = ri["name"]
+                if not ph_display_name:
+                    wk_entry = wk_kanji_db.get(new_phonetic)
+                    if wk_entry:
+                        ph_display_name = wk_entry.get("meaning")
+                profile.phonetic_family = {
+                    "phonetic_char": new_phonetic,
+                    "readings": ph.get("readings", []),
+                    "wk_radical_name": ph_display_name,
+                    "compounds": ph.get("compounds", []),
+                    "non_compounds": ph.get("non_compounds", []),
+                    "xrefs": ph.get("xrefs", []),
+                }
+                # Enrich compounds
+                profile.phonetic_family_kanji_details = []
+                for compound_char in ph.get("compounds", []):
+                    entry = {"char": compound_char}
+                    wk_c = wk_kanji_db.get(compound_char)
+                    if wk_c:
+                        entry["meaning"] = wk_c.get("meaning")
+                        entry["onyomi"] = wk_c.get("onyomi")
+                    profile.phonetic_family_kanji_details.append(entry)
 
     # Apply personal radical name overrides
     if personal_radicals:
@@ -526,7 +654,7 @@ def _replace_atoms_with_phonetic_components(
     profile.decomposition = new_decomp
 
 
-def format_profile(profile: KanjiProfile) -> str:
+def format_profile(profile: KanjiProfile, *, show_all_decomp: bool = False) -> str:
     """Format the profile as a human-readable summary (also used as LLM context)."""
     lines = []
     lines.append(f"═══ {profile.character} ═══")
@@ -560,8 +688,13 @@ def format_profile(profile: KanjiProfile) -> str:
             f"Type: {type_labels.get(profile.keisei_type, profile.keisei_type)}"
         )
 
+    is_personal = profile.personal_decomposition is not None
+
     if profile.wk_components:
-        lines.append("WaniKani Components:")
+        header = "WaniKani Components"
+        if is_personal:
+            header += " [personal]"
+        lines.append(f"{header}:")
         for c in profile.wk_components:
             if c["name"]:
                 lines.append(f"  {c['char']} → {c['name']}")
@@ -572,7 +705,11 @@ def format_profile(profile: KanjiProfile) -> str:
 
     if profile.keisei_type in ("comp_phonetic", "comp_phonetic_inferred"):
         lines.append("")
-        lines.append("── Phonetic-Semantic Breakdown ──")
+        header = "── Phonetic-Semantic Breakdown"
+        if is_personal:
+            header += " [personal]"
+        header += " ──"
+        lines.append(header)
         sem = profile.semantic_component or "?"
         ph = profile.phonetic_component or "?"
         sem_name = _find_name(sem, profile.wk_components)
@@ -613,6 +750,34 @@ def format_profile(profile: KanjiProfile) -> str:
     ):
         lines.append("")
         lines.append("Decomposition: " + " + ".join(profile.decomposition))
+
+    # --- All-decomp mode: show auto-detected decomposition as separate section ---
+    if show_all_decomp and is_personal and profile.auto_wk_components:
+        lines.append("")
+        lines.append("── Auto-detected Decomposition ──")
+        if profile.auto_keisei_type:
+            auto_type_labels = {
+                "comp_phonetic": "Phonetic-Semantic Compound (形声)",
+                "comp_phonetic_inferred": "Phonetic-Semantic Compound (形声) [inferred]",
+                "comp_indicative": "Compound Indicative (会意)",
+                "hieroglyph": "Hieroglyph / Pictograph (象形)",
+                "indicative": "Simple Indicative (指事)",
+                "unknown": "Unknown origin",
+            }
+            lines.append(
+                f"  Type: {auto_type_labels.get(profile.auto_keisei_type, profile.auto_keisei_type)}"
+            )
+        lines.append("  Components:")
+        for c in profile.auto_wk_components:
+            name = c["name"] or "(no name)"
+            lines.append(f"    {c['char']} → {name}")
+        if profile.auto_semantic_component or profile.auto_phonetic_component:
+            if profile.auto_semantic_component:
+                lines.append(f"  Semantic: {profile.auto_semantic_component}")
+            if profile.auto_phonetic_component:
+                lines.append(f"  Phonetic: {profile.auto_phonetic_component}")
+        if profile.auto_decomposition:
+            lines.append("  Decomposition: " + " + ".join(profile.auto_decomposition))
 
     return "\n".join(lines)
 
