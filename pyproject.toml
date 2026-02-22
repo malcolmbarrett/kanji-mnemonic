@@ -16,6 +16,7 @@ kanji = "kanji_mnemonic.cli:main"
 package = true
 
 [tool.pytest.ini_options]
+addopts = "-m 'not integration'"
 markers = [
     "integration: tests that hit the network (data source URL checks)",
 ]
