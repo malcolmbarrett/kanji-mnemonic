@@ -1,5 +1,6 @@
 """Download, cache, and load the Keisei and WaniKani databases."""
 
+import importlib.resources
 import io
 import json
 import os
@@ -367,6 +368,106 @@ def remove_personal_decomposition(kanji: str) -> bool:
     Returns True if an entry was removed, False if not found.
     """
     path = CONFIG_DIR / "decompositions.json"
+    if not path.exists():
+        return False
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if kanji not in data:
+        return False
+    del data[kanji]
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return True
+
+
+def load_wk_sound_mnemonics() -> dict:
+    """Load the bundled WK sound mnemonic database.
+
+    Returns {reading: {"character": str, "description": str}}.
+    Loaded from kanji_mnemonic/wk_sound_mnemonics.json via importlib.resources.
+    """
+    ref = importlib.resources.files("kanji_mnemonic") / "wk_sound_mnemonics.json"
+    return json.loads(ref.read_text(encoding="utf-8"))
+
+
+def merge_sound_mnemonics(wk_sounds: dict, personal_sounds: dict) -> dict:
+    """Merge WK and personal sound mnemonics. Personal overrides WK."""
+    merged = dict(wk_sounds)
+    merged.update(personal_sounds)
+    return merged
+
+
+def load_personal_sound_mnemonics() -> dict:
+    """Load the user's personal sound mnemonic dictionary.
+
+    Returns {reading: {"character": str, "description": str}}, or empty dict.
+    """
+    path = CONFIG_DIR / "sound_mnemonics.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save_personal_sound_mnemonic(
+    reading: str, character: str, description: str
+) -> None:
+    """Save or update a personal sound mnemonic for a reading."""
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    path = CONFIG_DIR / "sound_mnemonics.json"
+    data = {}
+    if path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+    data[reading] = {"character": character, "description": description}
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+
+def remove_personal_sound_mnemonic(reading: str) -> bool:
+    """Remove a personal sound mnemonic. Returns True if removed, False if not found."""
+    path = CONFIG_DIR / "sound_mnemonics.json"
+    if not path.exists():
+        return False
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if reading not in data:
+        return False
+    del data[reading]
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return True
+
+
+def load_reading_overrides() -> dict:
+    """Load the user's reading override dictionary.
+
+    Returns {kanji: "onyomi"|"kunyomi"} dict, or empty dict if the file doesn't exist.
+    """
+    path = CONFIG_DIR / "reading_overrides.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save_reading_override(kanji: str, reading_type: str) -> None:
+    """Save or update a reading override for a kanji.
+
+    Creates the config directory and file if they don't exist.
+    Raises ValueError if reading_type is not 'onyomi' or 'kunyomi'.
+    """
+    if reading_type not in ("onyomi", "kunyomi"):
+        raise ValueError(
+            f"reading_type must be 'onyomi' or 'kunyomi', got '{reading_type}'"
+        )
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    path = CONFIG_DIR / "reading_overrides.json"
+    data = {}
+    if path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+    data[kanji] = reading_type
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+
+def remove_reading_override(kanji: str) -> bool:
+    """Remove a reading override for a kanji.
+
+    Returns True if an entry was removed, False if not found.
+    """
+    path = CONFIG_DIR / "reading_overrides.json"
     if not path.exists():
         return False
     data = json.loads(path.read_text(encoding="utf-8"))

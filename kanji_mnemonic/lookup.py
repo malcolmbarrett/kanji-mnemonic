@@ -78,6 +78,7 @@ def lookup_kanji(
     personal_radicals: dict | None = None,
     infer_phonetic: bool = True,
     personal_decompositions: dict | None = None,
+    reading_overrides: dict | None = None,
 ) -> KanjiProfile:
     profile = KanjiProfile(character=char)
 
@@ -448,6 +449,12 @@ def lookup_kanji(
                         entry["meaning"] = wk_c.get("meaning")
                         entry["onyomi"] = wk_c.get("onyomi")
                     profile.phonetic_family_kanji_details.append(entry)
+
+    # Apply personal reading override
+    if reading_overrides and char in reading_overrides:
+        override = reading_overrides[char]
+        if override in ("onyomi", "kunyomi"):
+            profile.important_reading = override
 
     # Apply personal radical name overrides
     if personal_radicals:

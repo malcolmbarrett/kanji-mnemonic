@@ -615,6 +615,8 @@ class TestCmdDecompose:
             None,
             {},
             {},
+            {},
+            {},
         )
         data = json.loads(
             (config_dir / "decompositions.json").read_text(encoding="utf-8")
@@ -651,6 +653,8 @@ class TestCmdDecompose:
             sample_wk_kanji_subjects,
             sample_kradfile,
             None,
+            {},
+            {},
             {},
             {},
         )
@@ -695,6 +699,8 @@ class TestCmdDecompose:
             None,
             {},
             {},
+            {},
+            {},
         )
         data = json.loads(
             (config_dir / "decompositions.json").read_text(encoding="utf-8")
@@ -736,6 +742,8 @@ class TestCmdDecompose:
                 None,
                 {},
                 {},
+                {},
+                {},
             )
         output = capsys.readouterr().err
         assert "Nonexistent" in output
@@ -772,6 +780,8 @@ class TestCmdDecompose:
             sample_wk_kanji_subjects,
             sample_kradfile,
             None,
+            {},
+            {},
             {},
             {},
         )
@@ -815,6 +825,8 @@ class TestCmdDecompose:
             None,
             {},
             personal_decompositions,
+            {},
+            {},
         )
         output = capsys.readouterr().out
         assert "語" in output
@@ -853,6 +865,8 @@ class TestCmdDecompose:
             None,
             {},
             {},
+            {},
+            {},
         )
         output = capsys.readouterr().out
         assert "No personal decomposition" in output
@@ -889,6 +903,8 @@ class TestCmdDecompose:
             None,
             {},
             {},
+            {},
+            {},
         )
         data = json.loads(
             (config_dir / "decompositions.json").read_text(encoding="utf-8")
@@ -907,7 +923,7 @@ class TestDecomposeCommandDispatch:
     """Tests for main() routing to decompose command."""
 
     def _setup_mocks(self, monkeypatch):
-        mock_data = ({}, {}, {}, {}, {}, {}, {}, {}, {})
+        mock_data = ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         monkeypatch.setattr("kanji_mnemonic.cli.get_wk_api_key", lambda: None)
         monkeypatch.setattr("kanji_mnemonic.cli.load_all_data", lambda key: mock_data)
 
@@ -971,7 +987,7 @@ class TestAllDecompFlag:
     """Tests for --all-decomp flag on kanji lookup."""
 
     def _setup_mocks(self, monkeypatch):
-        mock_data = ({}, {}, {}, {}, {}, {}, {}, {}, {})
+        mock_data = ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         monkeypatch.setattr("kanji_mnemonic.cli.get_wk_api_key", lambda: None)
         monkeypatch.setattr("kanji_mnemonic.cli.load_all_data", lambda key: mock_data)
 

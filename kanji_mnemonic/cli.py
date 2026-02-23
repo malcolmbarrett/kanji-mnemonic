@@ -20,12 +20,20 @@ from .data import (
     load_mnemonic_for_kanji,
     load_personal_decompositions,
     load_personal_radicals,
+    load_personal_sound_mnemonics,
     load_phonetic_db,
+    load_reading_overrides,
     load_wk_kanji_db,
+    load_wk_sound_mnemonics,
+    merge_sound_mnemonics,
     remove_personal_decomposition,
+    remove_personal_sound_mnemonic,
+    remove_reading_override,
     save_mnemonic,
     save_personal_decomposition,
     save_personal_radical,
+    save_personal_sound_mnemonic,
+    save_reading_override,
 )
 from .lookup import format_profile, lookup_kanji, reverse_lookup_radical
 from .prompt import build_prompt, get_system_prompt
@@ -82,6 +90,9 @@ def load_all_data(wk_api_key: str | None):
 
     personal_radicals = load_personal_radicals()
     personal_decompositions = load_personal_decompositions()
+    reading_overrides = load_reading_overrides()
+    personal_sounds = load_personal_sound_mnemonics()
+    sound_mnemonics = merge_sound_mnemonics(load_wk_sound_mnemonics(), personal_sounds)
 
     return (
         kanji_db,
@@ -93,6 +104,8 @@ def load_all_data(wk_api_key: str | None):
         kanjidic,
         personal_radicals,
         personal_decompositions,
+        reading_overrides,
+        sound_mnemonics,
     )
 
 
@@ -107,8 +120,12 @@ def cmd_lookup(
     kanjidic,
     personal_radicals,
     personal_decompositions,
+    reading_overrides,
+    sound_mnemonics,
 ):
     """Just show the kanji profile without generating a mnemonic."""
+    from .prompt import _get_relevant_sound_mnemonics
+
     for char in args.kanji:
         profile = lookup_kanji(
             char,
@@ -122,6 +139,7 @@ def cmd_lookup(
             personal_radicals=personal_radicals,
             infer_phonetic=not getattr(args, "no_infer", False),
             personal_decompositions=personal_decompositions,
+            reading_overrides=reading_overrides,
         )
         print(
             format_profile(
@@ -129,6 +147,12 @@ def cmd_lookup(
                 show_all_decomp=getattr(args, "all_decomp", False),
             )
         )
+        if getattr(args, "sound", False) and sound_mnemonics:
+            relevant = _get_relevant_sound_mnemonics(profile, sound_mnemonics)
+            if relevant:
+                print("Sound mnemonics:")
+                for reading, info in relevant.items():
+                    print(f"  {reading} → {info['character']} ({info['description']})")
         print()
 
 
@@ -175,6 +199,8 @@ def cmd_memorize(
     kanjidic,
     personal_radicals,
     personal_decompositions,
+    reading_overrides,
+    sound_mnemonics,
 ):
     """Generate a mnemonic for the given kanji."""
     client = get_anthropic_client()
@@ -192,7 +218,12 @@ def cmd_memorize(
             personal_radicals=personal_radicals,
             infer_phonetic=not getattr(args, "no_infer", False),
             personal_decompositions=personal_decompositions,
+            reading_overrides=reading_overrides,
         )
+
+        # Apply one-shot --primary override
+        if getattr(args, "primary", None):
+            profile.important_reading = args.primary
 
         # Show the profile first
         print(format_profile(profile))
@@ -200,7 +231,9 @@ def cmd_memorize(
         print("── Generating mnemonic... ──")
         print()
 
-        user_msg = build_prompt(profile, user_context=args.context)
+        user_msg = build_prompt(
+            profile, user_context=args.context, sound_mnemonics=sound_mnemonics
+        )
         mnemonic_text = _stream_mnemonic(client, args.model, user_msg)
 
         # Auto-save immediately
@@ -242,6 +275,8 @@ def cmd_prompt(
     kanjidic,
     personal_radicals,
     personal_decompositions,
+    reading_overrides,
+    sound_mnemonics,
 ):
     """Show the assembled prompt without calling the LLM."""
     for char in args.kanji:
@@ -257,12 +292,17 @@ def cmd_prompt(
             personal_radicals=personal_radicals,
             infer_phonetic=not getattr(args, "no_infer", False),
             personal_decompositions=personal_decompositions,
+            reading_overrides=reading_overrides,
         )
         print("── SYSTEM PROMPT ──")
         print(get_system_prompt())
         print()
         print("── USER MESSAGE ──")
-        print(build_prompt(profile, user_context=args.context))
+        print(
+            build_prompt(
+                profile, user_context=args.context, sound_mnemonics=sound_mnemonics
+            )
+        )
         print()
 
 
@@ -277,6 +317,8 @@ def cmd_decompose(
     kanjidic,
     personal_radicals,
     personal_decompositions,
+    reading_overrides,
+    sound_mnemonics,
 ):
     """Set, show, or remove a personal kanji decomposition."""
     char = args.kanji
@@ -414,6 +456,95 @@ def cmd_names(args):
         print(f"  {char} → {name}")
 
 
+def cmd_reading(args):
+    """Save, show, or remove a reading override for a kanji."""
+    if args.remove:
+        removed = remove_reading_override(args.kanji)
+        if removed:
+            print(f"Removed reading override for {args.kanji}")
+        else:
+            print(f"No reading override for {args.kanji}")
+        return
+    if args.reading_type:
+        save_reading_override(args.kanji, args.reading_type)
+        print(f"Saved: {args.kanji} → primary reading: {args.reading_type}")
+        return
+    # Show current override
+    overrides = load_reading_overrides()
+    if args.kanji in overrides:
+        print(f"{args.kanji} → primary reading: {overrides[args.kanji]}")
+    else:
+        print(f"No reading override for {args.kanji}")
+        print("Use 'kanji reading <kanji> onyomi|kunyomi' to set one.")
+
+
+def cmd_readings(args):
+    """List all reading overrides."""
+    data = load_reading_overrides()
+    if not data:
+        print("No reading overrides yet.")
+        print("Use 'kanji reading <kanji> onyomi|kunyomi' to add one.")
+        return
+    for kanji, reading_type in data.items():
+        print(f"  {kanji} → {reading_type}")
+
+
+def cmd_sounds(args):
+    """List all sound mnemonics (merged WK + personal)."""
+    from .data import load_personal_sound_mnemonics
+
+    personal = load_personal_sound_mnemonics()
+
+    if getattr(args, "personal", False):
+        if not personal:
+            print("No personal sound mnemonics yet.")
+            print("Use 'kanji sound <reading> <character> <description>' to add one.")
+            return
+        for reading, info in sorted(personal.items()):
+            print(f"  {reading} → {info['character']} ({info['description']})")
+        return
+
+    wk = load_wk_sound_mnemonics()
+    merged = merge_sound_mnemonics(wk, personal)
+    if not merged:
+        print("No sound mnemonics available.")
+        return
+    for reading, info in sorted(merged.items()):
+        annotation = " [personal]" if reading in personal else ""
+        print(f"  {reading} → {info['character']} ({info['description']}){annotation}")
+
+
+def cmd_sound(args):
+    """Save, show, or remove a personal sound mnemonic."""
+    if args.remove:
+        removed = remove_personal_sound_mnemonic(args.reading)
+        if removed:
+            print(f"Removed personal sound mnemonic for {args.reading}")
+        else:
+            print(f"No personal sound mnemonic for {args.reading}")
+        return
+    if args.character and args.description:
+        save_personal_sound_mnemonic(args.reading, args.character, args.description)
+        print(f"Saved: {args.reading} → {args.character} ({args.description})")
+        return
+    if args.character:
+        print(
+            "Error: Both character and description are required to save a sound mnemonic."
+        )
+        print("Usage: kanji sound <reading> <character> <description>")
+        return
+    # Show current personal sound mnemonic
+    from .data import load_personal_sound_mnemonics
+
+    personal = load_personal_sound_mnemonics()
+    if args.reading in personal:
+        info = personal[args.reading]
+        print(f"{args.reading} → {info['character']} ({info['description']})")
+    else:
+        print(f"No personal sound mnemonic for {args.reading}")
+        print("Use 'kanji sound <reading> <character> <description>' to add one.")
+
+
 def cmd_show(args):
     """Display saved mnemonics for given kanji."""
     for char in args.kanji:
@@ -469,6 +600,12 @@ def main():
         default=False,
         help="Disable KRADFILE-based phonetic inference",
     )
+    p_memorize.add_argument(
+        "--primary",
+        choices=["onyomi", "kunyomi"],
+        default=None,
+        help="Override which reading type the mnemonic focuses on (one-shot, not saved)",
+    )
 
     # --- lookup ---
     p_lookup = subparsers.add_parser(
@@ -486,6 +623,12 @@ def main():
         action="store_true",
         default=False,
         help="Show both personal and auto-detected decompositions",
+    )
+    p_lookup.add_argument(
+        "--sound",
+        action="store_true",
+        default=False,
+        help="Show relevant sound mnemonics for this kanji's readings",
     )
 
     # --- prompt ---
@@ -535,6 +678,53 @@ def main():
     # --- names ---
     subparsers.add_parser("names", help="List all personal radical names")
 
+    # --- reading ---
+    p_reading = subparsers.add_parser(
+        "reading", help="Set, show, or remove a primary reading override"
+    )
+    p_reading.add_argument("kanji", help="A single kanji character")
+    p_reading.add_argument(
+        "reading_type",
+        nargs="?",
+        choices=["onyomi", "kunyomi"],
+        default=None,
+        help="Set the primary reading type (onyomi or kunyomi)",
+    )
+    p_reading.add_argument(
+        "--remove",
+        "--rm",
+        action="store_true",
+        default=False,
+        help="Remove the reading override for this kanji",
+    )
+
+    # --- readings ---
+    subparsers.add_parser("readings", help="List all reading overrides")
+
+    # --- sound ---
+    p_sound = subparsers.add_parser(
+        "sound", help="Add, show, or remove a personal sound mnemonic"
+    )
+    p_sound.add_argument("reading", help="The hiragana reading (e.g. こう)")
+    p_sound.add_argument("character", nargs="?", default=None, help="Character name")
+    p_sound.add_argument("description", nargs="?", default=None, help="Description")
+    p_sound.add_argument(
+        "--remove",
+        "--rm",
+        action="store_true",
+        default=False,
+        help="Remove the personal sound mnemonic for this reading",
+    )
+
+    # --- sounds ---
+    p_sounds = subparsers.add_parser("sounds", help="List all sound mnemonics")
+    p_sounds.add_argument(
+        "--personal",
+        action="store_true",
+        default=False,
+        help="Show only personal sound mnemonics",
+    )
+
     # --- show ---
     p_show = subparsers.add_parser(
         "show", aliases=["s"], help="Show saved mnemonic for a kanji"
@@ -565,6 +755,22 @@ def main():
 
     if args.command in ("show", "s"):
         cmd_show(args)
+        return
+
+    if args.command == "reading":
+        cmd_reading(args)
+        return
+
+    if args.command == "readings":
+        cmd_readings(args)
+        return
+
+    if args.command == "sound":
+        cmd_sound(args)
+        return
+
+    if args.command == "sounds":
+        cmd_sounds(args)
         return
 
     wk_api_key = get_wk_api_key()

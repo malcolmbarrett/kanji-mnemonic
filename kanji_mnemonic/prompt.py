@@ -1,8 +1,9 @@
 """Assemble the prompt for LLM-based mnemonic generation."""
 
+from .data import _katakana_to_hiragana
 from .lookup import KanjiProfile, format_profile
 
-SYSTEM_PROMPT = """\
+SYSTEM_PROMPT_BASE = """\
 You are a mnemonic generator for Japanese kanji, designed for someone who has studied \
 all of WaniKani's radicals and kanji. You create vivid, memorable mnemonics in the \
 WaniKani style.
@@ -19,9 +20,9 @@ WaniKani style.
 ### For reading mnemonics:
 - The primary reading should be woven into the story via English wordplay or sound-alikes
 - For on'yomi: find an English word/name/phrase that sounds like the reading
-- Common WK conventions: しょう = Shogun, じょう = Joe, かん = Kan/Khan, せい = Say, \
-こう = Coat/Kouichi, etc. — but feel free to invent your own if more memorable
 - For kun'yomi: same approach, find a phonetic hook
+- When "Sound mnemonic characters" are listed for a reading, use those words/names \
+as the phonetic hook — they are WaniKani's standard mnemonic words for those sounds
 
 ### For phonetic-semantic compounds:
 - Lead with the phonetic-semantic relationship: "This kanji combines [semantic] for \
@@ -39,12 +40,53 @@ then briefly address the secondary
 """
 
 
-def build_prompt(profile: KanjiProfile, user_context: str | None = None) -> str:
+def _get_relevant_sound_mnemonics(profile: KanjiProfile, sound_mnemonics: dict) -> dict:
+    """Find sound mnemonics relevant to this kanji's readings.
+
+    Matches on'yomi (converted from katakana to hiragana) and kun'yomi stems
+    (before the dot) against the sound mnemonics database (keyed in hiragana).
+    Returns {reading: {"character": ..., "description": ...}}.
+
+    When ``profile.important_reading`` is set (``"onyomi"`` or ``"kunyomi"``),
+    only returns sound mnemonics for that reading type.
+    """
+    relevant = {}
+    include_onyomi = profile.important_reading in (None, "onyomi")
+    include_kunyomi = profile.important_reading in (None, "kunyomi")
+
+    if include_onyomi:
+        for reading in profile.onyomi:
+            hiragana = _katakana_to_hiragana(reading)
+            if hiragana in sound_mnemonics:
+                relevant[hiragana] = sound_mnemonics[hiragana]
+    if include_kunyomi:
+        for reading in profile.kunyomi:
+            # Strip okurigana: "かた.る" -> "かた"
+            stem = reading.split(".")[0]
+            if stem in sound_mnemonics:
+                relevant[stem] = sound_mnemonics[stem]
+    return relevant
+
+
+def build_prompt(
+    profile: KanjiProfile,
+    user_context: str | None = None,
+    sound_mnemonics: dict | None = None,
+) -> str:
     """Build the user message for mnemonic generation."""
     parts = []
 
     parts.append("Generate a mnemonic for this kanji:\n")
     parts.append(format_profile(profile))
+
+    if sound_mnemonics:
+        relevant = _get_relevant_sound_mnemonics(profile, sound_mnemonics)
+        if relevant:
+            parts.append("\n── Sound mnemonic characters for this kanji ──")
+            for reading, info in relevant.items():
+                parts.append(
+                    f"  {reading} → {info['character']} ({info['description']})"
+                )
 
     if user_context:
         parts.append(f"\n── Additional context from user ──\n{user_context}")
@@ -69,4 +111,4 @@ def build_prompt(profile: KanjiProfile, user_context: str | None = None) -> str:
 
 
 def get_system_prompt() -> str:
-    return SYSTEM_PROMPT
+    return SYSTEM_PROMPT_BASE
