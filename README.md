@@ -99,6 +99,52 @@ kanji show 詠
 kanji s 詠
 ```
 
+### Set a personal decomposition
+
+Override the auto-detected decomposition for a kanji. You can use characters or radical names as parts, and mark phonetic/semantic roles:
+
+```bash
+kanji decompose 骸 骨 亥
+kanji d 骸 -s 骨 -p 亥          # mark semantic (-s) and phonetic (-p) components
+kanji d 骸                       # show saved decomposition
+kanji d 骸 --remove              # remove it
+```
+
+### Override the primary reading
+
+By default, the tool infers whether on'yomi or kun'yomi is most important. Override this persistently or for a single generation:
+
+```bash
+kanji reading 詠 kunyomi         # persistent override
+kanji reading 詠                 # show current override
+kanji reading 詠 --remove        # remove it
+kanji readings                   # list all overrides
+
+kanji m 待 --primary kunyomi     # one-shot override (not saved)
+```
+
+### Sound mnemonics
+
+Sound mnemonics map on'yomi readings to memorable characters/descriptions. The tool ships with WaniKani-derived defaults; you can add your own:
+
+```bash
+kanji sound こう Koichi "The WK founder"   # add personal sound mnemonic
+kanji sound こう                            # show mnemonic for a reading
+kanji sound こう --remove                   # remove it
+kanji sounds                                # list all (WK + personal)
+kanji sounds --personal                     # list only your additions
+```
+
+Sound mnemonics are automatically included in the LLM prompt when relevant to the kanji's readings.
+
+### Additional flags
+
+```bash
+kanji m 詠 --no-infer            # disable KRADFILE-based phonetic inference
+kanji l 詠 --all-decomp          # show both personal and auto-detected decompositions
+kanji l 詠 --sound               # show relevant sound mnemonics for this kanji
+```
+
 ### Skip the interactive prompt
 
 By default, `memorize` enters an interactive loop where you can accept, retry, edit, or quit. Use `-n` to skip it:
@@ -153,4 +199,9 @@ WaniKani Components:
 ## File locations
 
 - **Cache**: `~/.cache/kanji-mnemonic/` — downloaded databases (override with `KANJI_MNEMONIC_CACHE` env var)
-- **Config**: `~/.config/kanji/` — personal radical names (`radicals.json`) and saved mnemonics (`mnemonics.json`). Override with `KANJI_MNEMONIC_CONFIG` env var.
+- **Config**: `~/.config/kanji/` — personal data files (override with `KANJI_MNEMONIC_CONFIG` env var):
+  - `radicals.json` — personal radical names
+  - `mnemonics.json` — saved generated mnemonics
+  - `decompositions.json` — personal kanji decompositions
+  - `reading_overrides.json` — primary reading overrides
+  - `sound_mnemonics.json` — personal sound mnemonic overrides
