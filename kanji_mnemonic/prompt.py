@@ -1,5 +1,6 @@
 """Assemble the prompt for LLM-based mnemonic generation."""
 
+from .data import _katakana_to_hiragana
 from .lookup import KanjiProfile, format_profile
 
 SYSTEM_PROMPT_BASE = """\
@@ -37,11 +38,6 @@ already explained by the phonetic component
 then briefly address the secondary
 - If you don't recognize a component, say so — don't fabricate radical names
 """
-
-
-def _katakana_to_hiragana(text: str) -> str:
-    """Convert katakana to hiragana (ゴ → ご)."""
-    return "".join(chr(ord(c) - 0x60) if "\u30a1" <= c <= "\u30f6" else c for c in text)
 
 
 def _get_relevant_sound_mnemonics(profile: KanjiProfile, sound_mnemonics: dict) -> dict:

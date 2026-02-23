@@ -1,7 +1,7 @@
 """Tests for primary reading override feature (bd-3gt).
 
-These tests define the API contract for the reading override feature.
-They are expected to fail until the feature is implemented.
+These tests define the API contract for the reading override feature
+and verify its behavior.
 """
 
 import argparse

@@ -523,9 +523,15 @@ def cmd_sound(args):
         else:
             print(f"No personal sound mnemonic for {args.reading}")
         return
-    if args.character:
+    if args.character and args.description:
         save_personal_sound_mnemonic(args.reading, args.character, args.description)
         print(f"Saved: {args.reading} → {args.character} ({args.description})")
+        return
+    if args.character:
+        print(
+            "Error: Both character and description are required to save a sound mnemonic."
+        )
+        print("Usage: kanji sound <reading> <character> <description>")
         return
     # Show current personal sound mnemonic
     from .data import load_personal_sound_mnemonics

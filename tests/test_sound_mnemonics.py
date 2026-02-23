@@ -1,7 +1,6 @@
 """Tests for WK sound mnemonics (bd-1xp) and personal sound overrides (bd-20u).
 
-These tests define the API contract for the sound mnemonic features.
-They are expected to fail until the features are implemented.
+These tests define the API contract and validate the behavior of the sound mnemonic features.
 """
 
 import argparse

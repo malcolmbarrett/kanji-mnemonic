@@ -452,7 +452,9 @@ def lookup_kanji(
 
     # Apply personal reading override
     if reading_overrides and char in reading_overrides:
-        profile.important_reading = reading_overrides[char]
+        override = reading_overrides[char]
+        if override in ("onyomi", "kunyomi"):
+            profile.important_reading = override
 
     # Apply personal radical name overrides
     if personal_radicals:
