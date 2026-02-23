@@ -18,6 +18,7 @@ class TestGetSystemPrompt:
         assert "meaning mnemonics" in lower
         assert "reading mnemonics" in lower
         assert "phonetic-semantic compounds" in lower
+        assert "sound mnemonic characters" in lower
 
     def test_stable_output(self):
         first = get_system_prompt()

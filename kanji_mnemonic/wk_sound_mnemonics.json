@@ -1,0 +1,738 @@
+{
+  "あ": {
+    "character": "Ah",
+    "description": "Ah! (an exclamation)"
+  },
+  "あい": {
+    "character": "eye",
+    "description": "An eye"
+  },
+  "あつ": {
+    "character": "ah, two",
+    "description": "Ah, two!"
+  },
+  "あん": {
+    "character": "anchovies",
+    "description": "Anchovies"
+  },
+  "い": {
+    "character": "eagle",
+    "description": "An eagle"
+  },
+  "いん": {
+    "character": "inn",
+    "description": "An inn"
+  },
+  "う": {
+    "character": "uni",
+    "description": "Uni (sea urchin)"
+  },
+  "え": {
+    "character": "Eh",
+    "description": "Eh?! (an exclamation)"
+  },
+  "えい": {
+    "character": "acorn",
+    "description": "An acorn"
+  },
+  "えき": {
+    "character": "駅",
+    "description": "A train station (駅)"
+  },
+  "えつ": {
+    "character": "etch",
+    "description": "To etch"
+  },
+  "えん": {
+    "character": "end",
+    "description": "The end"
+  },
+  "お": {
+    "character": "obi",
+    "description": "An obi (sash)"
+  },
+  "おう": {
+    "character": "oh",
+    "description": "Oh! (an exclamation), or the king (王)"
+  },
+  "おく": {
+    "character": "Oklahoma",
+    "description": "Oklahoma"
+  },
+  "おん": {
+    "character": "onion",
+    "description": "An onion"
+  },
+  "か": {
+    "character": "car",
+    "description": "A car"
+  },
+  "かい": {
+    "character": "kayak",
+    "description": "A kayak"
+  },
+  "かく": {
+    "character": "cock",
+    "description": "A cock (rooster)"
+  },
+  "かた": {
+    "character": "catapult",
+    "description": "A catapult"
+  },
+  "かつ": {
+    "character": "cat",
+    "description": "A cat"
+  },
+  "かん": {
+    "character": "Khan",
+    "description": "Genghis Khan"
+  },
+  "が": {
+    "character": "gargoyle",
+    "description": "A gargoyle"
+  },
+  "がい": {
+    "character": "Guy",
+    "description": "Guy (as in 'hey guy')"
+  },
+  "がく": {
+    "character": "gawk",
+    "description": "To gawk"
+  },
+  "がん": {
+    "character": "Gandhi",
+    "description": "Gandhi"
+  },
+  "き": {
+    "character": "key",
+    "description": "A key"
+  },
+  "きゃく": {
+    "character": "Kyaku",
+    "description": "Kyaku the customer"
+  },
+  "きゅう": {
+    "character": "cucumber",
+    "description": "A cucumber"
+  },
+  "きょ": {
+    "character": "Little Kyoto",
+    "description": "Little Kyoto (distinguishes きょ from きょう)"
+  },
+  "きょう": {
+    "character": "Kyoto (きょうと)",
+    "description": "Kyoto"
+  },
+  "きょく": {
+    "character": "cloak",
+    "description": "A cloak"
+  },
+  "きん": {
+    "character": "King",
+    "description": "The King of England"
+  },
+  "ぎ": {
+    "character": "guillotine",
+    "description": "A guillotine"
+  },
+  "ぎょう": {
+    "character": "gyoza",
+    "description": "Gyoza dumplings"
+  },
+  "く": {
+    "character": "cookie",
+    "description": "A cookie"
+  },
+  "くつ": {
+    "character": "coots",
+    "description": "Old coots"
+  },
+  "くん": {
+    "character": "raccoon",
+    "description": "A raccoon"
+  },
+  "ぐん": {
+    "character": "gun",
+    "description": "A gun"
+  },
+  "けい": {
+    "character": "cake",
+    "description": "A cake"
+  },
+  "けつ": {
+    "character": "ketsup",
+    "description": "Ketsup (ketchup + catsup)"
+  },
+  "けん": {
+    "character": "Ken",
+    "description": "Ken the samurai"
+  },
+  "げい": {
+    "character": "gay",
+    "description": "Gay"
+  },
+  "げき": {
+    "character": "Gecki",
+    "description": "Gecki, a pet gecko"
+  },
+  "げん": {
+    "character": "Genji",
+    "description": "Genji, from The Tale of Genji"
+  },
+  "こ": {
+    "character": "子",
+    "description": "A child (子)"
+  },
+  "こう": {
+    "character": "Koichi (こういち)",
+    "description": "Koichi, one of the founders of WaniKani"
+  },
+  "こく": {
+    "character": "Coke",
+    "description": "Coke, the drink"
+  },
+  "こん": {
+    "character": "condor",
+    "description": "A condor"
+  },
+  "ご": {
+    "character": "Godzilla",
+    "description": "Godzilla"
+  },
+  "ごう": {
+    "character": "Grandpa Gouichi (ごういち)",
+    "description": "Grandpa Gouichi, Koichi's grandpa"
+  },
+  "さ": {
+    "character": "saw",
+    "description": "A saw"
+  },
+  "さい": {
+    "character": "cyborg",
+    "description": "A cyborg"
+  },
+  "さく": {
+    "character": "sack",
+    "description": "A sack"
+  },
+  "さつ": {
+    "character": "Satsuki",
+    "description": "Satsuki, a little girl with lots of books"
+  },
+  "さん": {
+    "character": "Santa-san",
+    "description": "Santa-san"
+  },
+  "ざい": {
+    "character": "xylophone",
+    "description": "A xylophone"
+  },
+  "ざん": {
+    "character": "Zanzibar",
+    "description": "Zanzibar"
+  },
+  "し": {
+    "character": "sheep",
+    "description": "A sheep"
+  },
+  "しき": {
+    "character": "chic",
+    "description": "Chic, stylish"
+  },
+  "しつ": {
+    "character": "shih tzu",
+    "description": "A shih tzu dog"
+  },
+  "しゃ": {
+    "character": "shaman",
+    "description": "A shaman"
+  },
+  "しゃく": {
+    "character": "Shaq",
+    "description": "Shaquille O'Neal"
+  },
+  "しゅ": {
+    "character": "chute",
+    "description": "A chute"
+  },
+  "しゅう": {
+    "character": "shoe",
+    "description": "A shoe"
+  },
+  "しゅく": {
+    "character": "shook",
+    "description": "Shook (past tense of shake)"
+  },
+  "しゅん": {
+    "character": "soon",
+    "description": "Soon"
+  },
+  "しょ": {
+    "character": "show",
+    "description": "A show"
+  },
+  "しょう": {
+    "character": "Shougun",
+    "description": "The Shougun"
+  },
+  "しょく": {
+    "character": "shock",
+    "description": "A shock"
+  },
+  "しん": {
+    "character": "shin",
+    "description": "A shin"
+  },
+  "じ": {
+    "character": "Jesus",
+    "description": "Jesus"
+  },
+  "じゅ": {
+    "character": "juice",
+    "description": "A juice box"
+  },
+  "じゅう": {
+    "character": "jewel",
+    "description": "A jewel"
+  },
+  "じゅん": {
+    "character": "June",
+    "description": "June, the month"
+  },
+  "じょ": {
+    "character": "Jo-Anne",
+    "description": "Jo-Anne, who usually goes by Jo"
+  },
+  "じょう": {
+    "character": "Joe",
+    "description": "Joe, a local farmhand"
+  },
+  "じん": {
+    "character": "jeans",
+    "description": "Jeans"
+  },
+  "す": {
+    "character": "suit",
+    "description": "A suit"
+  },
+  "すい": {
+    "character": "swing",
+    "description": "A swing"
+  },
+  "すう": {
+    "character": "sue",
+    "description": "To sue"
+  },
+  "せい": {
+    "character": "saber",
+    "description": "A saber"
+  },
+  "せき": {
+    "character": "sexy",
+    "description": "Sexy"
+  },
+  "せつ": {
+    "character": "set",
+    "description": "A set"
+  },
+  "せん": {
+    "character": "centaur",
+    "description": "A centaur"
+  },
+  "そ": {
+    "character": "soap",
+    "description": "Soap"
+  },
+  "そう": {
+    "character": "soul",
+    "description": "A soul"
+  },
+  "そく": {
+    "character": "sock",
+    "description": "A sock"
+  },
+  "そん": {
+    "character": "son",
+    "description": "A son"
+  },
+  "ぜん": {
+    "character": "Zen",
+    "description": "Zen Buddhism"
+  },
+  "ぞう": {
+    "character": "zombie",
+    "description": "A zombie"
+  },
+  "ぞく": {
+    "character": "bosozoku",
+    "description": "A bosozoku bike gang member"
+  },
+  "た": {
+    "character": "taco",
+    "description": "A taco"
+  },
+  "たい": {
+    "character": "tie",
+    "description": "A tie"
+  },
+  "たく": {
+    "character": "tack",
+    "description": "A tack"
+  },
+  "たん": {
+    "character": "tan",
+    "description": "A tan"
+  },
+  "だ": {
+    "character": "dad",
+    "description": "Your dad"
+  },
+  "だい": {
+    "character": "dye",
+    "description": "Dye"
+  },
+  "だん": {
+    "character": "dawn",
+    "description": "Dawn"
+  },
+  "ち": {
+    "character": "cheese",
+    "description": "Cheese"
+  },
+  "ちく": {
+    "character": "chick",
+    "description": "A baby chick"
+  },
+  "ちゅう": {
+    "character": "Chewbacca",
+    "description": "Chewbacca"
+  },
+  "ちょう": {
+    "character": "Mrs. Chou",
+    "description": "Mrs. Chou"
+  },
+  "ちん": {
+    "character": "chin",
+    "description": "A chin"
+  },
+  "つ": {
+    "character": "two",
+    "description": "Two"
+  },
+  "てい": {
+    "character": "tater tot",
+    "description": "A tater tot"
+  },
+  "てき": {
+    "character": "techie",
+    "description": "A techie"
+  },
+  "てつ": {
+    "character": "Tetsuo",
+    "description": "Tetsuo the Iron Man"
+  },
+  "てん": {
+    "character": "ten",
+    "description": "Ten"
+  },
+  "でん": {
+    "character": "dent",
+    "description": "A dent"
+  },
+  "と": {
+    "character": "toe",
+    "description": "A toe"
+  },
+  "とう": {
+    "character": "Tokyo (とうきょう)",
+    "description": "Tokyo"
+  },
+  "とく": {
+    "character": "Tokugawa",
+    "description": "Tokugawa Ieyasu, the first shogun of the Tokugawa shogunate"
+  },
+  "ど": {
+    "character": "dog",
+    "description": "A dog"
+  },
+  "どう": {
+    "character": "doughnut",
+    "description": "A doughnut"
+  },
+  "な": {
+    "character": "nacho",
+    "description": "Nachos"
+  },
+  "に": {
+    "character": "knee",
+    "description": "A knee"
+  },
+  "にん": {
+    "character": "Nintendo",
+    "description": "Nintendo"
+  },
+  "ねん": {
+    "character": "nendoroid",
+    "description": "A nendoroid figurine"
+  },
+  "の": {
+    "character": "nori",
+    "description": "Nori seaweed"
+  },
+  "のう": {
+    "character": "Nostradamus",
+    "description": "Nostradamus, the famous seer"
+  },
+  "は": {
+    "character": "Ha",
+    "description": "Ha! (an exclamation)"
+  },
+  "はい": {
+    "character": "haiku",
+    "description": "A haiku"
+  },
+  "はく": {
+    "character": "hack",
+    "description": "To hack"
+  },
+  "はち": {
+    "character": "hatch",
+    "description": "A hatch"
+  },
+  "はん": {
+    "character": "Han",
+    "description": "Han Solo from Star Wars"
+  },
+  "ばい": {
+    "character": "bye",
+    "description": "Bye! (a farewell)"
+  },
+  "ばく": {
+    "character": "back",
+    "description": "Back (direction)"
+  },
+  "ばつ": {
+    "character": "bat",
+    "description": "A bat (baseball)"
+  },
+  "ばん": {
+    "character": "ban",
+    "description": "Banned"
+  },
+  "ひ": {
+    "character": "heat",
+    "description": "Heat"
+  },
+  "ひょう": {
+    "character": "Heyo",
+    "description": "Heyo, a greeting/exclamation"
+  },
+  "ひん": {
+    "character": "Hindu",
+    "description": "Hindu"
+  },
+  "び": {
+    "character": "bee",
+    "description": "A bee"
+  },
+  "びょう": {
+    "character": "B.O.",
+    "description": "B.O. (body odor)"
+  },
+  "びん": {
+    "character": "bin",
+    "description": "A trash bin"
+  },
+  "ふ": {
+    "character": "fool",
+    "description": "A fool"
+  },
+  "ふう": {
+    "character": "food",
+    "description": "Food"
+  },
+  "ふく": {
+    "character": "f**k",
+    "description": "F**k (expletive)"
+  },
+  "ふん": {
+    "character": "fun",
+    "description": "Fun"
+  },
+  "ぶ": {
+    "character": "booze",
+    "description": "Booze"
+  },
+  "ぶん": {
+    "character": "bun",
+    "description": "A bun"
+  },
+  "へい": {
+    "character": "hay",
+    "description": "Hay"
+  },
+  "へん": {
+    "character": "hen",
+    "description": "A hen"
+  },
+  "べん": {
+    "character": "bento",
+    "description": "A bento box"
+  },
+  "ほ": {
+    "character": "hoe",
+    "description": "A garden hoe"
+  },
+  "ほう": {
+    "character": "home",
+    "description": "Home"
+  },
+  "ほん": {
+    "character": "hone",
+    "description": "To hone"
+  },
+  "ぼ": {
+    "character": "Bobo",
+    "description": "Bobo the clown"
+  },
+  "ぼう": {
+    "character": "bowling",
+    "description": "Bowling"
+  },
+  "ぼく": {
+    "character": "ぼく",
+    "description": "Boku (I, masculine first person pronoun)"
+  },
+  "ま": {
+    "character": "mama",
+    "description": "Mama"
+  },
+  "まい": {
+    "character": "mice",
+    "description": "Mice"
+  },
+  "まつ": {
+    "character": "mat",
+    "description": "A mat"
+  },
+  "まん": {
+    "character": "manga",
+    "description": "Manga"
+  },
+  "み": {
+    "character": "meat",
+    "description": "Meat"
+  },
+  "む": {
+    "character": "moo",
+    "description": "Moo (cow sound)"
+  },
+  "めい": {
+    "character": "May",
+    "description": "May (the month), or the Mayflower"
+  },
+  "めん": {
+    "character": "men",
+    "description": "Men"
+  },
+  "もう": {
+    "character": "mow",
+    "description": "To mow"
+  },
+  "もん": {
+    "character": "monster",
+    "description": "A monster"
+  },
+  "や": {
+    "character": "Yankees",
+    "description": "The Yankees"
+  },
+  "やく": {
+    "character": "yak",
+    "description": "A yak"
+  },
+  "ゆ": {
+    "character": "yurt",
+    "description": "A yurt"
+  },
+  "ゆう": {
+    "character": "youth",
+    "description": "A youth"
+  },
+  "よ": {
+    "character": "yo-yo",
+    "description": "A yo-yo"
+  },
+  "よう": {
+    "character": "yogurt",
+    "description": "Yogurt"
+  },
+  "よく": {
+    "character": "yolk",
+    "description": "An egg yolk"
+  },
+  "ら": {
+    "character": "Ra",
+    "description": "Ra, the ancient Egyptian god"
+  },
+  "らい": {
+    "character": "rye",
+    "description": "Rye"
+  },
+  "らく": {
+    "character": "rack",
+    "description": "A rack"
+  },
+  "らん": {
+    "character": "Macho Man Randy Savage",
+    "description": "Macho Man Randy Savage, the professional wrestler"
+  },
+  "り": {
+    "character": "reed",
+    "description": "A reed"
+  },
+  "りつ": {
+    "character": "Ritz",
+    "description": "The Ritz hotel"
+  },
+  "りゅう": {
+    "character": "Ryu",
+    "description": "Ryu from Street Fighter"
+  },
+  "りょ": {
+    "character": "Rio",
+    "description": "Rio, as in Rio de Janeiro"
+  },
+  "りょう": {
+    "character": "row",
+    "description": "A row"
+  },
+  "りん": {
+    "character": "ring",
+    "description": "A ring"
+  },
+  "るい": {
+    "character": "ruin",
+    "description": "Ruins"
+  },
+  "れい": {
+    "character": "ray",
+    "description": "A ray (of light)"
+  },
+  "れつ": {
+    "character": "let's",
+    "description": "Let's (as in 'let us')"
+  },
+  "れん": {
+    "character": "rental",
+    "description": "A rental"
+  },
+  "ろ": {
+    "character": "road",
+    "description": "A road"
+  },
+  "ろう": {
+    "character": "roe",
+    "description": "Fish roe"
+  }
+}

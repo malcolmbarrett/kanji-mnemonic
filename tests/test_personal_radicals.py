@@ -458,7 +458,7 @@ class TestNameCommandDispatch:
 
     def _setup_mocks(self, monkeypatch):
         """Set up common mocks so main() doesn't load real data."""
-        mock_data = ({}, {}, {}, {}, {}, {}, {})
+        mock_data = ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         monkeypatch.setattr("kanji_mnemonic.cli.get_wk_api_key", lambda: None)
         monkeypatch.setattr("kanji_mnemonic.cli.load_all_data", lambda key: mock_data)
 
